@@ -1,1 +1,2 @@
 Hej detta är en textfil för Erik misslyckas med att ladda upp nått.
+NU flyttade jag filen till en mapp, tog bort den gamla filen och uppdaterade denna samt repon.
