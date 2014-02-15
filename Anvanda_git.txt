@@ -7,6 +7,7 @@
 Git frågar eventuellt efter ditt gitkontos lösenord, skriv in det. Klart!
 
 
+
 === Lägg till/uppdatera fil ===
 1. git add "filnamn"
 filen "filnamn" är nu staged.
@@ -24,6 +25,7 @@ din fil är nu uppdaterad på den globala repositoryn.
 ================================
 
 
+
 === Ta bort fil ===
 1. git rm "filnamn"
 Detta kommando registrerar att filen "filnamn" markerats för borttagning.
@@ -38,7 +40,8 @@ Skriv in lösenord. Filen är nu borttagen.
 ================================
 
 
-!!!=== Ladda hem senaste ändringar ===!!!
+
+=== Ladda hem senaste ändringar ===
 Detta skall göras varje gång INNAN du börjar ändra något i koden. Jobbiga
 conflicts kan uppstå annars.
 
@@ -46,6 +49,7 @@ conflicts kan uppstå annars.
 2. skriv in gitlösenord. klart!
 
 ================================
+
 
 
 === visa difflog ===
