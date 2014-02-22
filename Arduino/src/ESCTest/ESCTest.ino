@@ -2,10 +2,16 @@
 #include "Motor.h"
 
 Motor leftFrontMotor;
+Motor rightFrontMotor;
+Motor leftbackMotor;
+Motor rightbackMotor;
 void setup() 
 { 
   Serial.begin(9600);
   leftFrontMotor.init(10);
+  rightFrontMotor.init(11);
+  leftbackMotor.init(12);
+  rightbackMotor.init(13);
 }
 
 void loop() 
@@ -37,5 +43,8 @@ void loop()
 
   //write recieved data to the motor.
   leftFrontMotor.setSpeed(res);
+  rightFrontMotor.setSpeed(res);
+  leftbackMotor.setSpeed(res);
+  rightbackMotor.setSpeed(res);
 } 
 
