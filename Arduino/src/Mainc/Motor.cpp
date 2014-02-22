@@ -30,18 +30,27 @@ void Motor::callibrateESC(){
   delay(2000);
 }
 
+//allow different syntax for setter
+int Motor::operator=(int speed){
+  return setSpeed(speed);
+}
+
 //Set the motor-speed. If the ESC is not initialized or an invalid value is passed
-//the function will return false, true otherwise.
-bool Motor::setSpeed(int speed){
+//the function will return 0, speed otherwise.
+int Motor::setSpeed(int speed){
   if(initialized && speed >= MIN && speed <= MAX){
     this->speed = speed;
     esc.write(speed);
-    return true;
+    return speed;
   }
-  return false;
+  return 0;
 }
 
 int Motor::getSpeed(){
   return speed;
 }
 
+//allow different syntax for getter
+Motor::operator int(){
+  return speed;
+}
