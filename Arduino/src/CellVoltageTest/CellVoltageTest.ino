@@ -1,3 +1,4 @@
+#include <Servo.h>
 #include "CellVoltage.h"
 
 void setup() {

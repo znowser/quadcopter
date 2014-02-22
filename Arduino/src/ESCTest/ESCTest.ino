@@ -8,7 +8,6 @@ void setup()
   leftFrontMotor.init(10);
 }
 
-
 void loop() 
 { 
   int res = 0;

@@ -1,1 +1,1 @@
-cp -u ../Main/*.h ../Main/*.cpp .
+cp -u ../Mainc/*.h ../Mainc/*.cpp .
