@@ -11,6 +11,7 @@ private:
 	const static float optimizedConvert;
 	float c;
 public:
+        CellVoltage(){};
 	CellVoltage(int pin);
         void init(int pin);
 	float getVoltage();

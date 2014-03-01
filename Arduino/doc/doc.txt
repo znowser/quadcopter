@@ -1,0 +1,1 @@
+För att köra arduinokoden i src så behöver biblioteket för freeIMU installeras. Detta bibliotek finns i mappen lib och installationsguiden hittas i filen INSTALL.txt.

@@ -10,16 +10,13 @@ enum CellPins{
   cell1 = A0, cell2 = A1, cell3 = A2};
 /*=========================================*/
 
-bool runOnce = false;
-/*Do not use this function*/
+/*========= Do not change this ===========*/
+//Workaround to get normal program-flow of main function.
+bool runOnce = true;
+/*Do not use these functions*/
 void setup(){}
-/*Do not change this */
-//workaround to get normal program-flow of main function.
-void loop(){
-  if(!runOnce)
-    main();
-  runOnce = true;  
-}
+void loop(){runOnce ? runOnce = main() : 0;}
+/*========================================*/
 
 int main(){
   Motor motor[4];
@@ -41,6 +38,8 @@ int main(){
   int s = motor[leftfront];
   s = motor[leftfront].getSpeed();  
   
+  //return 0 if nothing more shall be executed, otherwise the main-function will
+  //be called again.
   return 0;
 }
 

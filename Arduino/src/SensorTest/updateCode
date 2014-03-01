@@ -1,0 +1,1 @@
+cp -u ../Mainc/*.h ../Mainc/*.cpp .
