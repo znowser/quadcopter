@@ -56,21 +56,24 @@ int mainf(){
   /*==========Hover regulator=============*/
   Hover regulator(motor, sensorData, 0.1);
 
+  int count = 0;
   //Main regulator/sensor loop
   while(true){
     if(mpu.readYawPitchRoll(ypr)){
       //temperature and pressure cannot be read directly after each other, it
       //must be a small delay between the two functioncalls.
       temperature = baro.getTemperature(MS561101BA_OSR_4096);
-      Serial.print(ypr[0] * 180/M_PI);
-      Serial.print("\t");
-      Serial.print(ypr[1] * 180/M_PI);
-      Serial.print("\t");
-      Serial.print(ypr[2] * 180/M_PI);
-      Serial.print("\t");  
-      Serial.print("Altitude: ");
-      Serial.print(getAltitude(pressure, temperature));   
-      Serial.println(" m");
+      if(count & 1000 == 0){
+        Serial.print(ypr[0] * 180/M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[1] * 180/M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[2] * 180/M_PI);
+        Serial.print("\t");  
+        Serial.print("Altitude: ");
+        Serial.print(getAltitude(pressure, temperature));   
+        Serial.println(" m");
+      }
       pressure = baro.getPressure(MS561101BA_OSR_4096);
       
       sensorData.temperature = temperature;
@@ -79,6 +82,7 @@ int mainf(){
       sensorData.angleYaw = ypr[0];
       sensorData.anglePitch = ypr[1];
       sensorData.angleRoll = ypr[2];
+      ++count;
     }
     regulator.Regulate();
   }
