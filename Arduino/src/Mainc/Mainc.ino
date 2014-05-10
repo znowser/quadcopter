@@ -28,6 +28,8 @@ int mainf(){
   float temperature = 0, pressure = 0;
   sensordata sensorData;
   float ypr[3];
+  float height;
+  bool regulatorIsInitialized = false;
   
   /*==========Init Sensors============*/
   //init gyro and magnetic field
@@ -54,7 +56,7 @@ int mainf(){
   /*==================================*/
 
   /*==========Hover regulator=============*/
-  Hover regulator(motor, sensorData, 0.1);
+  Hover regulator;//(motor, sensorData, 0.1);
 
   int count = 0;
   //Main regulator/sensor loop
@@ -71,18 +73,25 @@ int mainf(){
         Serial.print(ypr[2] * 180/M_PI);
         Serial.print("\t");  
         Serial.print("Altitude: ");
-        Serial.print(getAltitude(pressure, temperature));   
+        Serial.print(height);   
         Serial.println(" m");
       }
       pressure = baro.getPressure(MS561101BA_OSR_4096);
       
       sensorData.temperature = temperature;
       sensorData.pressure = pressure;
-      sensorData.height = getAltitude(pressure, temperature);
+      sensorData.height = height;
       sensorData.angleYaw = ypr[0];
       sensorData.anglePitch = ypr[1];
       sensorData.angleRoll = ypr[2];
       ++count;
+      
+      //init the regulator if it haven't not been done yet, must be initialized
+      //with a valide height
+      if(!regulatorIsInitialized){
+        regulator.init(motor, sensorData, height + 0.1);
+        regulatorIsInitialized = true;
+      }
     }
     regulator.Regulate();
   }

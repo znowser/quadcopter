@@ -2,6 +2,9 @@
 #include <cmath>
 
 Hover::Hover(Motor *motors, sensordata &sensor, float refHeight) {
+  init(motors, sensor, refHeight);
+}
+void Hover::init(Motor *motors, sensordata &sensor, float refHeight){
   this->motors = motors;
   this->sensor = sensor;
   this->time = micros();
@@ -18,7 +21,6 @@ Hover::Hover(Motor *motors, sensordata &sensor, float refHeight) {
   old_errorHeight = 0.0;
   speed = 0;
 }
-
 /* Motor:
  * setSpeed(int speed), value ranging 
  * getSpeed(int percentage)
