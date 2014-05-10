@@ -13,7 +13,7 @@ void Motor::init(int pin){
     this->pin = pin;
     speed = MIN;
     initialized = true;
-    Serial.println("initte");
+    Serial.println("Initialize motor");
     esc.attach(pin);
     //=== arm ESC ===
     esc.write(MIN);

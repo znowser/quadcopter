@@ -7,7 +7,7 @@ Motor leftbackMotor;
 Motor rightbackMotor;
 void setup() 
 { 
-  Serial.begin(9600);
+  Serial.begin(115200);
   leftFrontMotor.init(10);
   rightFrontMotor.init(11);
   leftbackMotor.init(12);
