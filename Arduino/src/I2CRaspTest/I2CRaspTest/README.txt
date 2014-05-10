@@ -1,0 +1,1 @@
+Use this program with the Raspberry-program "I2CRaspTest" to check if the i2cbuss between the raspberry and the arduino is working.

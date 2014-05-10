@@ -20,6 +20,7 @@ function displayMPU6050(data)
     t = 1:1/samplesPerSec:sec + 1;
     t(1) = [];
     
+% ==== 2d plot ====    
     subplot(1, 2, 1);
     plot(t, acc_x, t, acc_y, t, acc_z);
     xlabel('Time [s]');
@@ -31,5 +32,17 @@ function displayMPU6050(data)
     xlabel('Time [s]');
     ylabel('Magnitude');
     title('Gyrometer (x, y, z)');
-    
+%==================
+%     for i = 1:samples
+%         clf;
+%         hold on;
+%         plot3(acc_x(i), acc_y(i), acc_z(i), 'o');
+%         plot3(0, 0, 0, 'x');
+%         view(90, 90);
+%       %  hold off;
+%        % Frames(:, i) = getframe;
+%        % pause(0.1);
+%         pause(1/samplesPerSec);
+%     end
+  %  movie(Frames, 1);
 end

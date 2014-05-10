@@ -1,133 +1,54 @@
-// I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class
-// 10/7/2011 by Jeff Rowberg <jeff@rowberg.net>
-// Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
-//
-// Changelog:
-//      2013-05-08 - added multiple output formats
-//                 - added seamless Fastwire support
-//      2011-10-07 - initial release
-
-/* ============================================
- I2Cdev device library code is placed under the MIT license
- Copyright (c) 2011 Jeff Rowberg
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
- ===============================================
- */
-
-// I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
-// for both classes must be in the include path of your project
-#include "I2Cdev.h"
-#include "MPU6050.h"
-
-// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+//wire.h must be included here.
 #include "Wire.h"
-#endif
+#include "MPU6050Abstraction.h"
+#include "MS561101BA.h"
 
-// class default I2C address is 0x68
-// specific I2C addresses may be passed as a parameter here
-// AD0 low = 0x68 (default for InvenSense evaluation board)
-// AD0 high = 0x69
-MPU6050 accelgyro;
-//MPU6050 accelgyro(0x69); // <-- use for AD0 high
+MPUAbstraction mpu = MPUAbstraction();
+MS561101BA baro = MS561101BA();
+int count = 0;
+const float sea_press = 1013.25;
+float temperature = 0, pressure = 0;
 
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
-
-
-
+float getAltitude(float press, float temp);
 void setup() {
-  // join I2C bus (I2Cdev library doesn't do this automatically)
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-  Wire.begin();
-#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-  Fastwire::setup(400, true);
-#endif
-
   // initialize serial communication
-  // (38400 chosen because it works as well at 8MHz as it does at 16MHz, but
-  // it's really up to you depending on your project)
-  Serial.begin(38400);
+  mpu.init();
+  Serial.begin(115200); 
+  //attach interruptfunction that is called whenever there are data to be read.
+  attachInterrupt(0, MPUAbstraction::MPUInt, RISING);
 
-  // initialize device
-  Serial.println("Initializing I2C devices...");
-  accelgyro.initialize();
+  //wrong test?
+  //Serial.println(!mpu.deviceStatus() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
-  // verify connection
-  Serial.println("Testing device connections...");
-  Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
-
-  // use the code below to change accel/gyro offset values
-  /*
-    Serial.println("Updating internal sensor offsets...");
-   // -76	-2359	1688	0	0	0
-   Serial.print(accelgyro.getXAccelOffset()); Serial.print("\t"); // -76
-   Serial.print(accelgyro.getYAccelOffset()); Serial.print("\t"); // -2359
-   Serial.print(accelgyro.getZAccelOffset()); Serial.print("\t"); // 1688
-   Serial.print(accelgyro.getXGyroOffset()); Serial.print("\t"); // 0
-   Serial.print(accelgyro.getYGyroOffset()); Serial.print("\t"); // 0
-   Serial.print(accelgyro.getZGyroOffset()); Serial.print("\t"); // 0
-   Serial.print("\n");
-   accelgyro.setXGyroOffset(220);
-   accelgyro.setYGyroOffset(76);
-   accelgyro.setZGyroOffset(-85);
-   Serial.print(accelgyro.getXAccelOffset()); Serial.print("\t"); // -76
-   Serial.print(accelgyro.getYAccelOffset()); Serial.print("\t"); // -2359
-   Serial.print(accelgyro.getZAccelOffset()); Serial.print("\t"); // 1688
-   Serial.print(accelgyro.getXGyroOffset()); Serial.print("\t"); // 0
-   Serial.print(accelgyro.getYGyroOffset()); Serial.print("\t"); // 0
-   Serial.print(accelgyro.getZGyroOffset()); Serial.print("\t"); // 0
-   Serial.print("\n");
-   */
-
-  // configure Arduino LED for
-  //pinMode(LED_PIN, OUTPUT);
+  baro.init(MS561101BA_ADDR_CSB_LOW);
+  delay(100);
 }
 
 void loop() {
+  float ypr[3];
+  //switch to i2c master-mode
   
-  
-  while(true){
-    // read raw accel/gyro measurements from device
-    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  
-    // these methods (and a few others) are also available
-    //accelgyro.getAcceleration(&ax, &ay, &az);
-    //accelgyro.getRotation(&gx, &gy, &gz);
-  
-    // display tab-separated accel/gyro x/y/z values;
-    Serial.print(ax); 
-    Serial.print("\t");
-    Serial.print(ay); 
-    Serial.print("\t");
-    Serial.print(az); 
-    Serial.print("\t");
-    Serial.print(gx); 
-    Serial.print("\t");
-    Serial.print(gy); 
-    Serial.print("\t");
-    Serial.println(gz);
-    
-    delay(20);
+  if(mpu.readYawPitchRoll(ypr)){
+    //temperature and pressure cannot be read directly after each other, it
+    //must be a small delay between the two functioncalls.
+    temperature = baro.getTemperature(MS561101BA_OSR_4096);
+     Serial.print(ypr[0] * 180/M_PI);
+     Serial.print("\t");
+     Serial.print(ypr[1] * 180/M_PI);
+     Serial.print("\t");
+     Serial.print(ypr[2] * 180/M_PI);
+     Serial.print("\t");  
+     Serial.print("Altitude: ");
+     Serial.print(getAltitude(pressure, temperature));   
+     Serial.println(" m");
+    pressure = baro.getPressure(MS561101BA_OSR_4096);
   }
 }
+
+float getAltitude(float press, float temp) {
+  //return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
+  return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+}
+
 
 
