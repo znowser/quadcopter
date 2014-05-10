@@ -6,14 +6,11 @@
 #include "Motor.h"
 #include "CellVoltage.h"
 #include "Hover.h"
+#include "SensorDataStruct.h"
 
-/*======== Mapping of hardwarePins ========*/
-enum MotorPins { 
-  leftfront = 10, rightfront = 11, leftback = 12, rightback = 13}; 
-enum CellPins{
-  cell1 = A0, cell2 = A1, cell3 = A2};
 /*=========================================*/
 const float sea_press = 1013.25;
+sensordata sensorData;
 
 /*========= Do not change this ===========*/
 //Workaround to get normal program-flow of main function.
@@ -56,6 +53,9 @@ int main(){
   //get current speed
   //s = motor[leftfront].getSpeed();  
 
+  /*==========Hover regulator=============*/
+  Hover regulator(motor, sensorData);
+
   float ypr[3];
   while(true){
     if(mpu.readYawPitchRoll(ypr)){
@@ -73,13 +73,10 @@ int main(){
       Serial.println(" m");
       pressure = baro.getPressure(MS561101BA_OSR_4096);
     } 
+    regulator.Regulate();
   }
 
   int s = motor[leftfront].getSpeed();  
-  
-  /*==============Hover=============*/
-  Hover regulator(motor, sensor);
-  regulator.Start();
   
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.
