@@ -56,7 +56,7 @@ int mainf(){
   /*==================================*/
 
   /*==========Hover regulator=============*/
-  Hover regulator;//(motor, sensorData, 0.1);
+  Hover regulator;
 
   int count = 0;
   //Main regulator/sensor loop
@@ -93,7 +93,8 @@ int mainf(){
         regulatorIsInitialized = true;
       }
     }
-    regulator.Regulate();
+    if(regulatorIsInitialized)
+      regulator.Regulate();
   }
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.

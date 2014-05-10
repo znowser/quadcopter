@@ -8,7 +8,7 @@ void Hover::init(Motor *motors, sensordata &sensor, float refHeight){
   this->motors = motors;
   this->sensor = sensor;
   this->time = micros();
-  this->refHeight = refHeight;
+  refHeight = 0.0;
   old_lfmh = 0.0;
   old_rfmh = 0.0;
   old_lfmv = 0.0;
