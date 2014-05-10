@@ -54,7 +54,7 @@ int main(){
   //s = motor[leftfront].getSpeed();  
 
   /*==========Hover regulator=============*/
-  Hover regulator(motor, sensorData);
+  Hover regulator(motor, sensorData, 0.1);
 
   float ypr[3];
   while(true){
