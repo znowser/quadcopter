@@ -16,6 +16,7 @@ Hover::Hover(Motor *motors, sensordata &sensor, float refHeight) {
   old_cbv = 0.0;
   old_cba = 0.0;
   old_errorHeight = 0.0;
+  speed = 0;
 }
 
 /* Motor:
@@ -48,8 +49,8 @@ void Hover::Regulate(void) {
     
     float speedDiff = errorHeight * 10 + ((errorHeight - old_errorHeight) / dt) * 100;
     
-    int speed = motors[leftfront].getSpeed() + (int)(speedDiff * 1);
-    
+    //int speed = motors[leftfront].getSpeed() + (int)(speedDiff * 1);
+    speed = speed + (int)(speedDiff * 1);
     
     Serial.print("P-reg: ");
     Serial.println(errorHeight * 10);
