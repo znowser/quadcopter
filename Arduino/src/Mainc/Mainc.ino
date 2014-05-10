@@ -54,7 +54,7 @@ int mainf(){
   /*==================================*/
 
   /*==========Hover regulator=============*/
-  Hover regulator(motor, sensorData, 0.1);
+  Hover regulator(motor, sensorData);
 
   //Main regulator/sensor loop
   while(true){

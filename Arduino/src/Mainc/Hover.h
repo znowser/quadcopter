@@ -21,8 +21,9 @@ private:
   float old_cba;
   float old_errorHeight;
   float speed;
+  boolean init;
 public:
-  Hover(Motor *motors, sensordata &sensor, float refHeight);
+  Hover(Motor *motors, sensordata &sensor);
   void Regulate(void);
 };
 
