@@ -37,7 +37,8 @@ int Motor::operator=(int speed){
 
 //Set the motor-speed. If the ESC is not initialized or an invalid value is passed
 //the function will return 0, speed otherwise.
-int Motor::setSpeed(int speed){
+int Motor::setSpeed(int _speed){
+  int speed = (((float)_speed) / 100.0) * ((float)(MAX - MIN)) + MIN;
   if(initialized && speed >= MIN && speed <= MAX){
     this->speed = speed;
     esc.write(speed);
@@ -47,7 +48,7 @@ int Motor::setSpeed(int speed){
 }
 
 int Motor::getSpeed(){
-  return speed;
+  return (((float)(this->speed - MIN)) / ((float)(MAX - MIN))) * 100;
 }
 
 //allow different syntax for getter

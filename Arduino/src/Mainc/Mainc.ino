@@ -5,6 +5,8 @@
 #include "MS561101BA.h"
 #include "Motor.h"
 #include "CellVoltage.h"
+#include "Hover.h"
+
 /*======== Mapping of hardwarePins ========*/
 enum MotorPins { 
   leftfront = 10, rightfront = 11, leftback = 12, rightback = 13}; 
@@ -73,6 +75,12 @@ int main(){
     } 
   }
 
+  int s = motor[leftfront].getSpeed();  
+  
+  /*==============Hover=============*/
+  Hover regulator(motor, sensor);
+  regulator.Start();
+  
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.
   return 0;
@@ -82,8 +90,6 @@ float getAltitude(float press, float temp) {
   //return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
   return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 }
-
-
 
 
 
