@@ -17,7 +17,7 @@ struct sensordata {
   float angleRoll;
   /*Accelerations*/
   float temperature;
-  float preasure;
+  float pressure;
   float height;
 };
 
