@@ -80,7 +80,7 @@ int mainf(){
       
       sensorData.temperature = temperature;
       sensorData.pressure = pressure;
-      sensorData.height = height;
+      sensorData.height = getAltitude(pressure, temperature);
       sensorData.angleYaw = ypr[0];
       sensorData.anglePitch = ypr[1];
       sensorData.angleRoll = ypr[2];
@@ -89,7 +89,7 @@ int mainf(){
       //init the regulator if it haven't not been done yet, must be initialized
       //with a valide height
       if(!regulatorIsInitialized){
-        regulator.init(motor, sensorData, height + 0.1);
+        regulator.init(motor, sensorData, sensorData.height + 0.1);
         regulatorIsInitialized = true;
       }
     }

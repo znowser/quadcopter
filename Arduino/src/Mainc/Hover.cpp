@@ -29,7 +29,7 @@ void Hover::init(Motor *motors, sensordata &sensor, float refHeight){
 void Hover::Regulate(void) {
   unsigned long currentTime = micros();
   unsigned long dt = currentTime - this->time;
-  if (dt > 330000){
+  if (dt > 1000000){
     
     // lfmh = left front motor height
     float lfmh = 0.4 * tan(sensor.anglePitch);
@@ -58,7 +58,10 @@ void Hover::Regulate(void) {
     Serial.println(errorHeight * 10);
     Serial.print("D-reg: ");
     Serial.println(((errorHeight - old_errorHeight) / dt) * 100);
-    
+    Serial.print("height: ");
+    Serial.println(cbh);
+    Serial.print("refHeight: ");
+    Serial.println(refHeight);
     Serial.print("Speed: ");
     Serial.println(speed);
     Serial.print("Speed diff: ");
