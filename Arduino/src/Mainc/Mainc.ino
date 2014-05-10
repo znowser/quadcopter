@@ -2,6 +2,7 @@
 
 #include "Motor.h"
 #include "CellVoltage.h"
+#include "Hover.h"
 
 /*======== Mapping of hardwarePins ========*/
 enum MotorPins { 
@@ -38,12 +39,18 @@ int main(){
   int s = motor[leftfront];
   s = motor[leftfront].getSpeed();  
   
+  /*==============Hover=============*/
+  Hover regulator(motor, sensor);
+  regulator.Start();
+  
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.
   return 0;
 }
 
-
+void hover(void) {
+  
+}
 
 
 
