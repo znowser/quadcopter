@@ -27,7 +27,7 @@ Hover::Hover(Motor *motors, sensordata &sensor, float refHeight) {
 void Hover::Regulate(void) {
   unsigned long currentTime = micros();
   unsigned long dt = currentTime - this->time;
-  if (dt > 1000) {
+  if (dt > 330000){
     
     // lfmh = left front motor height
     float lfmh = 0.4 * tan(sensor.anglePitch);
