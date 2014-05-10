@@ -50,6 +50,12 @@ void Hover::Regulate(void) {
     
     int speed = motors[leftfront].getSpeed() + (int)(speedDiff * 1);
     
+    
+    Serial.print("P-reg: ");
+    Serial.println(errorHeight * 10);
+    Serial.print("D-reg: ");
+    Serial.println(((errorHeight - old_errorHeight) / dt) * 100);
+    
     Serial.print("Speed: ");
     Serial.println(speed);
     Serial.print("Speed diff: ");
@@ -77,10 +83,5 @@ void Hover::Regulate(void) {
     old_cba = cba;
     old_errorHeight = errorHeight;
     time = currentTime;
-  }
-  
+  }  
 }
-
-float minAbs(float v1, float v2) {
-    return (abs(v1) > abs(v2)) ? v2 : v1;          
-  }
