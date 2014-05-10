@@ -1,10 +1,12 @@
+#ifndef HOVER_H
+#define HOVER_H
+
 #include "Motor.h"
 #include "SensorDataStruct.h"
-#include <cmath>
 
 class Hover {
 private:
-  Motor motors[4];
+  Motor *motors;
   sensordata sensor;
   float refHeight;
   unsigned long time;
@@ -19,6 +21,8 @@ private:
   float old_cba;
   float old_errorHeight;
 public:
-  Hover(Motor motors[4], sensordata &sensor, float refHeight);
+  Hover(Motor *motors, sensordata &sensor, float refHeight);
   void Regulate(void);
-}
+};
+
+#endif

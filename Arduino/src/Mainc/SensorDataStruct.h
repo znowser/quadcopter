@@ -1,6 +1,8 @@
 #ifndef SENSORDATA_STRUCT
 #define SENSORDATA_STRUCT
 
+#include "Arduino.h"
+
 /*======== Mapping of hardwarePins ========*/
 enum MotorPins { 
   leftfront = 10, rightfront = 11, leftback = 12, rightback = 13}; 

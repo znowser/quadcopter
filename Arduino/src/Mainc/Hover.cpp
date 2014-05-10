@@ -1,5 +1,7 @@
+#include "Hover.h"
+#include <cmath>
 
-Hover:Hover(Motor motors[4], sensordata &sensor, float refHeight) {
+Hover::Hover(Motor *motors, sensordata &sensor, float refHeight) {
   this->motors = motors;
   this->sensor = sensor;
   this->time = micros();
@@ -13,7 +15,7 @@ Hover:Hover(Motor motors[4], sensordata &sensor, float refHeight) {
   old_cbh = 0.0;
   old_cbv = 0.0;
   old_cba = 0.0;
-  old_errorHeight 0.0;
+  old_errorHeight = 0.0;
 }
 
 /* Motor:
@@ -46,7 +48,7 @@ void Hover::Regulate(void) {
     
     float speedDiff = errorHeight * 10 + ((errorHeight - old_errorHeight) / dt) * 100;
     
-    int speed = motor[leftfront].getSpeed() + (int)(speedDiff * 1);
+    int speed = motors[leftfront].getSpeed() + (int)(speedDiff * 1);
     
     Serial.print("Speed: ");
     Serial.println(speed);
@@ -77,8 +79,8 @@ void Hover::Regulate(void) {
     time = currentTime;
   }
   
-  float minAbs(float v1, float v2) {
+}
+
+float minAbs(float v1, float v2) {
     return (abs(v1) > abs(v2)) ? v2 : v1;          
   }
-  
-}
