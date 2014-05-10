@@ -5,18 +5,9 @@
 #include "Wire.h"
 #include "MPU6050Abstraction.h"
 #include "MS561101BA.h"
-//#include "Hover.h"
+#include "SensorDataStruct.h"
+#include "Hover.h"
 
-
-#define NUM_OF_MOTORS 4
-#define NUM_OF_CELLS 3
-
-/*======== Mapping of hardwarePins ========*/
-enum MotorPins { 
-  leftfront = 0, rightfront = 1, leftback = 2, rightback = 3}; 
-enum CellPins{
-  cell1 = 0, cell2 = 1, cell3 = 2};
-/*=========================================*/
 const float sea_press = 1013.25;
 
 /*========= Do not change this ===========*/
@@ -27,6 +18,7 @@ void setup(){}
 void loop(){runOnce ? runOnce = mainf() : 0;}
 /*========================================*/
 
+
 float getAltitude(float press, float temp);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf(){
@@ -34,6 +26,7 @@ int mainf(){
   Motor motor[4];
   CellVoltage battery[3];
   float temperature = 0, pressure = 0;
+  sensordata sensorData;
   float ypr[3];
   
   /*==========Init Sensors============*/
@@ -45,6 +38,7 @@ int mainf(){
   //barometer and temperature
   MS561101BA baro = MS561101BA();
   baro.init(MS561101BA_ADDR_CSB_LOW);
+
   /*===================================*/
   //*==========Init Motors=============*/
   //Hardware mapping of motors
@@ -58,7 +52,10 @@ int mainf(){
   battery[cell2].init(A1);
   battery[cell3].init(A2);
   /*==================================*/
-  
+
+  /*==========Hover regulator=============*/
+  Hover regulator(motor, sensorData, 0.1);
+
   //Main regulator/sensor loop
   while(true){
     if(mpu.readYawPitchRoll(ypr)){
@@ -75,10 +72,18 @@ int mainf(){
       Serial.print(getAltitude(pressure, temperature));   
       Serial.println(" m");
       pressure = baro.getPressure(MS561101BA_OSR_4096);
+      
+      sensorData.temperature = temperature;
+      sensorData.pressure = pressure;
+      sensorData.height = getAltitude(pressure, temperature);
+      sensorData.angleYaw = ypr[0];
+      sensorData.anglePitch = ypr[1];
+      sensorData.angleRoll = ypr[2];
     }
-    
-    delay(10);
-  }  
+    regulator.Regulate();
+  }
+  //return 0 if nothing more shall be executed, otherwise the main-function will
+  //be called again.
   return 0;
 }
 
