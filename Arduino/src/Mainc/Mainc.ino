@@ -18,8 +18,8 @@ void setup(){}
 void loop(){runOnce ? runOnce = mainf() : 0;}
 /*========================================*/
 
-
 float getAltitude(float press, float temp);
+template<class T> void dataToRasp(const char *variableName, T data);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf(){
   Serial.begin(115200);
@@ -56,7 +56,7 @@ int mainf(){
   /*==================================*/
 
   /*==========Hover regulator=============*/
-  Hover regulator;
+  //Hover regulator;
 
   int count = 0;
   //Main regulator/sensor loop
@@ -65,22 +65,39 @@ int mainf(){
       //temperature and pressure cannot be read directly after each other, it
       //must be a small delay between the two functioncalls.
       temperature = baro.getTemperature(MS561101BA_OSR_4096);
-      if(count & 1000 == 0){
-        Serial.print(ypr[0] * 180/M_PI);
-        Serial.print("\t");
-        Serial.print(ypr[1] * 180/M_PI);
-        Serial.print("\t");
-        Serial.print(ypr[2] * 180/M_PI);
-        Serial.print("\t");  
-        Serial.print("Altitude: ");
-        Serial.print(height);   
-        Serial.println(" m");
-      }
+
+      //========== The following data is sent to the PC on martins format ==========      
+      //send battery info
+      dataToRasp<int>("c1", battery[cell1].getVoltage());
+      dataToRasp<int>("c2", battery[cell2].getVoltage());
+      dataToRasp<int>("c3", battery[cell3].getVoltage());
+
+      //send motor data
+      dataToRasp<int>("lf", motor[leftfront].getSpeed());
+      dataToRasp<int>("rf", motor[rightfront].getSpeed());
+      dataToRasp<int>("lb", motor[leftback].getSpeed());
+      dataToRasp<int>("rb", motor[rightback].getSpeed());
+      
+            //get pressure, cannot be done directly after getTemperature, The sensorcard need
+      //a small delay between the function calls.
       pressure = baro.getPressure(MS561101BA_OSR_4096);
+      height = getAltitude(pressure, temperature);
+      //send temperature/pressure/height
+      dataToRasp<float>("temp", temperature);
+      dataToRasp<float>("height", height);
+      
+      //send yaw/pitch/yaw
+      dataToRasp<float>("yaw", 180 + ypr[0] * 180/M_PI);
+      dataToRasp<float>("pitch", 180 + ypr[1] * 180/M_PI);
+      dataToRasp<float>("roll", 180 + ypr[2] * 180/M_PI);
+      
+      //quick fix
+       Serial.println();
+      //==============================================
       
       sensorData.temperature = temperature;
       sensorData.pressure = pressure;
-      sensorData.height = getAltitude(pressure, temperature);
+      sensorData.height = height;
       sensorData.angleYaw = ypr[0];
       sensorData.anglePitch = ypr[1];
       sensorData.angleRoll = ypr[2];
@@ -88,13 +105,15 @@ int mainf(){
       
       //init the regulator if it haven't not been done yet, must be initialized
       //with a valide height
-      if(!regulatorIsInitialized){
-        regulator.init(motor, sensorData, sensorData.height + 0.1);
-        regulatorIsInitialized = true;
-      }
+    //  if(!regulatorIsInitialized){
+    //    Serial.print("height is now: ");
+    //   Serial.println(sensorData.height);
+    //    regulator.init(motor, sensorData, height + 0.1);
+    //    regulatorIsInitialized = true;
+     // }
     }
-    if(regulatorIsInitialized)
-      regulator.Regulate();
+    //if(regulatorIsInitialized)
+    //  regulator.Regulate();
   }
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.
@@ -104,5 +123,15 @@ int mainf(){
 float getAltitude(float press, float temp) {
   //return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
   return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+}
+
+//Martins format
+//each variable is sent by the format " variable:data! "
+template<class T>
+void dataToRasp(const char *variableName, T data){
+  Serial.print(variableName);
+  Serial.print(":");
+  Serial.print(data);
+  Serial.print("!");
 }
 
