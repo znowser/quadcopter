@@ -7,8 +7,8 @@
 class Hover {
 private:
   Motor *motors;
-  sensordata sensor;
-  float refHeight;
+  sensordata *sensor;
+  float refAltitude;
   unsigned long time;
   float old_lfmh;
   float old_rfmh;
@@ -19,13 +19,16 @@ private:
   float old_cbh;
   float old_cbv;
   float old_cba;
-  float old_errorHeight;
-  float speed;
+  float old_errorAltitude;
+  float speed_lf;
+  float speed_rf;
+  float speed_lb;
+  float speed_rb;
 public:
   Hover() {};
-  Hover(Motor *motors, sensordata &sensor, float refHeight);
+  Hover(Motor *motors, sensordata *sensor, float refAltitude);
   void Regulate(void);
-  void init(Motor *motors, sensordata &sensor, float refHeight);
+  void init(Motor *motors, sensordata *sensor, float refAltitude);
 };
 
 #endif
