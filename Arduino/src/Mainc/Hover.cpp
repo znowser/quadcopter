@@ -24,6 +24,10 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude){
   old_cbv = 0.0;
   old_cba = 0.0;
   old_errorAltitude = 0.0;
+  
+  /* debug print out */
+  Serial.print("Reference altitude: ");
+  Serial.println(refAltitude);
 }
 
 void Hover::Regulate(void) {
@@ -139,18 +143,22 @@ void Hover::Regulate(void) {
     Serial.println(cbh);
     Serial.print("Velocity: ");
     Serial.println(cbv);
+    /*
     Serial.print("Acceleration: ");
     Serial.println(cba);
-    Serial.print("Reference altitude: ");
-    Serial.println(refAltitude);
-    Serial.print("Current speed (lf, rf, lb, rb): ");
+    */
+    Serial.print("Current speed (lf, [rf, lb, rb]): ");
     Serial.println(speed_lf);
+    /*
     Serial.println(speed_rf);
     Serial.println(speed_lb);
     Serial.println(speed_rb);
+    */
     Serial.print("Last speed changes (body, lf, rf): ");
     Serial.println(dBodySpeed);
+    /*
     Serial.println(dLeftFrontSpeed);
     Serial.println(dRightFrontSpeed);
+    */
   }  
 }
