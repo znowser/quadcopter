@@ -7,7 +7,7 @@
 class Hover {
 private:
   Motor *motors;
-  sensordata sensor;
+  sensordata &sensor;
   float refHeight;
   unsigned long time;
   float old_lfmh;
@@ -23,7 +23,7 @@ private:
   float speed;
 public:
   Hover() {};
-  Hover(Motor *motors, sensordata &sensor, float refHeight);
+  Hover(Motor *motors, sensordata sensor, float refHeight);
   void Regulate(void);
   void init(Motor *motors, sensordata &sensor, float refHeight);
 };

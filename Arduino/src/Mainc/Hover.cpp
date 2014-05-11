@@ -4,7 +4,7 @@
 Hover::Hover(Motor *motors, sensordata &sensor, float refHeight) {
   init(motors, sensor, refHeight);
 }
-void Hover::init(Motor *motors, sensordata &sensor, float refHeight){
+void Hover::init(Motor *motors, sensordata sensor, float refHeight){
   this->motors = motors;
   this->sensor = sensor;
   this->time = micros();
