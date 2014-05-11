@@ -20,7 +20,10 @@ private:
   float old_cbv;
   float old_cba;
   float old_errorAltitude;
-  float speed;
+  float speed_lf;
+  float speed_rf;
+  float speed_lb;
+  float speed_rb;
 public:
   Hover() {};
   Hover(Motor *motors, sensordata *sensor, float refAltitude);
