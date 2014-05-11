@@ -24,6 +24,9 @@ private:
   float speed_rf;
   float speed_lb;
   float speed_rb;
+  
+  double meanAlt[100];
+  int cntAlt;
 public:
   Hover() {};
   Hover(Motor *motors, sensordata *sensor, float refAltitude);

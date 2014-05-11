@@ -24,7 +24,10 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude){
   old_cbv = 0.0;
   old_cba = 0.0;
   old_errorAltitude = 0.0;
-  
+  int i = 0;
+  for (i = 0; i < 100; ++i)
+    meanAlt[i] = sensor->height;
+  cntAlt = 0;
   /* debug print out */
   Serial.print("Reference altitude: ");
   Serial.println(refAltitude);
@@ -35,6 +38,9 @@ void Hover::Regulate(void) {
   /* debug values, simplifies tests */
   int     debug_maxEngineEffect = 50;
   boolean debug_setEngineEffect = false;
+  
+  meanAlt[cntAlt] = sensor->height;
+  cntAlt = ++cntAlt % 100;
   
   /* minimal interval between updates */
   unsigned long minUpdateInterval = 1000000;
@@ -69,7 +75,11 @@ void Hover::Regulate(void) {
     /* retrieve height */
     lfmh = 0.4 * tan(sensor->anglePitch);
     rfmh = 0.4 * tan(sensor->angleRoll);
-    cbh = sensor->height;
+    //cbh = sensor->height;
+    int i = 0;
+    for(i = 0; i < 100; ++i)
+      cbh += meanAlt[i] / (double)cntAlt;
+    cbh = cbh / 100.0;
     
     /* retrieve velocity */
     lfmv = (lfmh - old_lfmh) / dt;
@@ -139,11 +149,12 @@ void Hover::Regulate(void) {
     Serial.println(errorAltitude * 10);
     Serial.print("D: ");
     Serial.println(((errorAltitude - old_errorAltitude) / dt) * 100);
+    */
     Serial.print("Altitude: ");
     Serial.println(cbh);
-    Serial.print("Velocity: ");
-    Serial.println(cbv);*/
     /*
+    Serial.print("Velocity: ");
+    Serial.println(cbv);s    
     Serial.print("Acceleration: ");
     Serial.println(cba);
     */
@@ -153,10 +164,8 @@ void Hover::Regulate(void) {
     Serial.println(speed_rf);
     Serial.println(speed_lb);
     Serial.println(speed_rb);
-    */
-    /*Serial.print("Last speed changes (body, lf, rf): ");
+    Serial.print("Last speed changes (body, lf, rf): ");
     Serial.println(dBodySpeed);
-    *//*
     Serial.println(dLeftFrontSpeed);
     Serial.println(dRightFrontSpeed);
     */
