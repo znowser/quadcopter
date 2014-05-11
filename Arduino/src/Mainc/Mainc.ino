@@ -89,7 +89,7 @@ int mainf(){
       //init the regulator if it haven't not been done yet, must be initialized
       //with a valide height
       if(!regulatorIsInitialized){
-        regulator.init(motor, sensorData, sensorData.height + 0.1);
+        regulator.init(motor, &sensorData, (float)(sensorData.height + 0.05));
         regulatorIsInitialized = true;
       }
     }
