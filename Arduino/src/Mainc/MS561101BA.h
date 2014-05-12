@@ -65,8 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class MS561101BA {
   public:
-    MS561101BA();
-    void init(uint8_t addr);
+    MS561101BA(uint8_t addr);
     float getPressure(uint8_t OSR);
     float getTemperature(uint8_t OSR);
     int32_t getDeltaTemp(uint8_t OSR);
@@ -76,6 +75,7 @@ class MS561101BA {
     void reset();
     uint32_t lastPresConv, lastTempConv;
   private:
+    void init(uint8_t addr);
     void startConversion(uint8_t command);
     uint32_t getConversion(uint8_t command);
     uint8_t _addr;

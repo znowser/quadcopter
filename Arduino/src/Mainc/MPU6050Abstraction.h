@@ -36,12 +36,12 @@ private:
   VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
   VectorFloat gravity;    // [x, y, z]            gravity vector
 
+  void init();
 public:
   MPUAbstraction();
   bool readYawPitchRoll(float ypr[3]);
   static void MPUInt();
   bool deviceStatus();
-  void init();
 };
 
 #endif

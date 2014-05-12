@@ -12,6 +12,8 @@ enum CellPins{
 
 struct sensordata {
   /*Angles*/
+  int motorSpeed[4];
+  float cellVoltage[3];
   float angleYaw;
   float anglePitch;
   float angleRoll;

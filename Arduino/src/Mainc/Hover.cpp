@@ -13,7 +13,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude){
   speed_rf = motors[rightfront].getSpeed();
   speed_lb = motors[leftback].getSpeed();
   speed_rb = motors[rightfront].getSpeed();
-  refAltitude = 0.0;
+  this->refAltitude = refAltitude;
   old_lfmh = 0.0;
   old_rfmh = 0.0;
   old_lfmv = 0.0;
@@ -25,9 +25,10 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude){
   old_cba = 0.0;
   old_errorAltitude = 0.0;
   int i = 0;
-  for (i = 0; i < 100; ++i)
+  for (i = 0; i < sampleAlt; ++i)
     meanAlt[i] = sensor->height;
   cntAlt = 0;
+  initRefAlt = true;
   /* debug print out */
   Serial.print("Reference altitude: ");
   Serial.println(refAltitude);
@@ -40,7 +41,16 @@ void Hover::Regulate(void) {
   boolean debug_setEngineEffect = false;
   
   meanAlt[cntAlt] = sensor->height;
-  cntAlt = ++cntAlt % 100;
+  cntAlt = ++cntAlt % sampleAlt;
+  
+  if (initRefAlt && cntAlt == 0) {
+    initRefAlt = false;
+    int i = 0;
+    float tmp = 0;
+    for(i = 0; i < sampleAlt; ++i)
+      tmp += meanAlt[i];
+    refAltitude = tmp / (float)sampleAlt + refAltitude;
+  }
   
   /* minimal interval between updates */
   unsigned long minUpdateInterval = 1000000;
@@ -52,7 +62,7 @@ void Hover::Regulate(void) {
   unsigned long dt = currentTime - this->time;
   
   /* if dt exceeds minimal uptade interval, calculate new action */
-  if (dt > minUpdateInterval){
+  if (dt > minUpdateInterval && !initRefAlt){
   
     /* maximal error on altitude to put in the regulation algorithm */  
     float maxErrorAltitude = 0.1;
@@ -77,9 +87,10 @@ void Hover::Regulate(void) {
     rfmh = 0.4 * tan(sensor->angleRoll);
     //cbh = sensor->height;
     int i = 0;
-    for(i = 0; i < 100; ++i)
-      cbh += meanAlt[i] / (double)cntAlt;
-    cbh = cbh / 100.0;
+    cbh = 0;
+    for(i = 0; i < sampleAlt; ++i)
+      cbh += meanAlt[i];
+    cbh = cbh / (float)sampleAlt;
     
     /* retrieve velocity */
     lfmv = (lfmh - old_lfmh) / dt;

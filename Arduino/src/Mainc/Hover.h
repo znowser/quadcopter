@@ -4,6 +4,8 @@
 #include "Motor.h"
 #include "SensorDataStruct.h"
 
+#define sampleAlt 10
+
 class Hover {
 private:
   Motor *motors;
@@ -25,7 +27,8 @@ private:
   float speed_lb;
   float speed_rb;
   
-  double meanAlt[100];
+  bool initRefAlt;
+  double meanAlt[sampleAlt];
   int cntAlt;
 public:
   Hover() {};
