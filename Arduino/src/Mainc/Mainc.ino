@@ -59,7 +59,7 @@ int mainf() {
   Hover regulator;
   //Main regulator/sensor loop
   while (true) {
-    if (mpu.readYawPitchRoll(ypr, &sensorData.acc)) {
+    if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
       //send the sensorstruct to the raspberry

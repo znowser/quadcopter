@@ -9,7 +9,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
 	/* Hardware */
 	this->motors = motors;
 	this->sensor = sensor;
-	timeStampMotor = timeStamp = micros();	
+	timestampMotor = timestamp = micros();	
 
 	/* Desired position */
 	positionDesired[X] = 0;
@@ -81,9 +81,9 @@ bool Hover::Calibrate(void)  {
 
 void Hover::Regulate(void) {
 	unsigned long timestampCurrent = micros();
-	unsigned long dt = timestampCurrent - timeStamp;
+	unsigned long dt = timestampCurrent - timestamp;
 	unsigned long dtSqr = dt * dt;
-	float accX{0}, accY{0}, accZ{0};
+	float accX = 0, accY =0, accZ = 0;
 
 	/* Buffer up acceleration values */
 	accelerationBuffer[accelerationBufferCounter] = sensor->acc.x;
@@ -93,7 +93,7 @@ void Hover::Regulate(void) {
 
 	/* Calculate average acceleration from buffer */
 	for (int i = 0; i < sampleAcceleration; ++i) {
-		accX += accelerationBuffer[i]
+		accX += accelerationBuffer[i];
 		accY += accelerationBuffer[++i];
 		accZ += accelerationBuffer[++i];
 	}
@@ -122,7 +122,7 @@ void Hover::Regulate(void) {
 	/* Calculate new values for motors. 
 	 * OBS The value affects PD calculation -> dt = 1000
 	 */
-	if (timestampCurrent - timeStampMotor >= 1000){
+	if (timestampCurrent - timestampMotor >= 1000){
 
 		/* TODO map motors to axis correct */
 		float leftFrontMotorZ;
@@ -138,13 +138,13 @@ void Hover::Regulate(void) {
 
 		/* calculate how large alteration is taken on current speed. */
 		// OBS short-cut since dt = 1000 then the d-part is shortened
-		float regPD = posError[Z] * 10.0 + (posError[Z] - positionError[Z]) * 0.1;
+		float regPD = posError[Z] * 10.0 + (posError[Z] - positionErrorPrev[Z]) * 0.1;
 		float regPDLM = leftFrontMotorZ * 10.0 + (leftFrontMotorZ - leftFrontMotorZOld) * 0.1;
 		float regPDRM = rightFrontMotorZ * 10.0 + (rightFrontMotorZ - rightFrontMotorZOld) * 0.1;
 
 		// DEBUG, do all changes equaly on all engines
-		regLM = 0.0;
-		regRM = 0.0;
+		regPDLM = 0.0;
+		regPDRM = 0.0;
 
 		/* Set speed, limited to a max value TODO have this mapped correct! */
 		speed_lf = min(speed_lf + regPD + regPDLM, debug_maxMotorEffect);
@@ -163,8 +163,10 @@ void Hover::Regulate(void) {
 		/* store state */
 		leftFrontMotorZOld = leftFrontMotorZ;
 		rightFrontMotorZOld = rightFrontMotorZ;
-		positionErrorOld = positionError;
-		timeStampMotor = timestampCurrent;
+		positionErrorPrev[X] = posError[X];
+		positionErrorPrev[Y] = posError[Y];
+		positionErrorPrev[Z] = posError[Z];
+		timestampMotor = timestampCurrent;
 	}  
-	timeStamp = timeStampCurrent;
+	timestamp = timestampCurrent;
 }

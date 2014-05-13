@@ -28,7 +28,7 @@ private:
 	sensordata *sensor;
 
 	/* last call and last motor update */
-	unsigned long timeStamp, timeStampMotor;
+	unsigned long timestamp, timestampMotor;
 
 	/* Internal position from start*/
 	float positionRelative[3];
