@@ -28,7 +28,7 @@ void MPUAbstraction::MPUInt(){
 }
 
 //return true if yaw, pitch, roll was reveiced from the sensor MPU6050, false otherwise
-bool MPUAbstraction::readYawPitchRoll(float ypr[3]){
+bool MPUAbstraction::readYawPitchRoll(float ypr[3], VectorInt16 &acc){
   // if programming failed or there is no data available, don't try to do anything
   if (mpuDataReady == false || (devStatus != 0)) return false;
 
@@ -61,6 +61,15 @@ bool MPUAbstraction::readYawPitchRoll(float ypr[3]){
     mpu.dmpGetQuaternion(&q, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+    
+    
+    //get acceleration
+    VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+    VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
+    VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
+    mpu.dmpGetAccel(&aa, fifoBuffer);
+    mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+    mpu.dmpGetLinearAccelInWorld(&acc, &aaReal, &q);
     
     //invert yaw and pitch to correspond to the real world
     //roll is right from begining.

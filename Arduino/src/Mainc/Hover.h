@@ -30,6 +30,17 @@ private:
   bool initRefAlt;
   double meanAlt[sampleAlt];
   int cntAlt;
+  
+  int calibrate_cnt;
+  
+  double yaw_calibrate[32];
+  double pitch_calibrate[32];
+  double roll_calibrate[32];
+  
+  double yaw_offset;
+  double pitch_offset;
+  double roll_offset;
+  
 public:
   Hover() {};
   Hover(Motor *motors, sensordata *sensor, float refAltitude);

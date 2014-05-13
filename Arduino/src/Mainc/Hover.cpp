@@ -29,6 +29,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude){
     meanAlt[i] = sensor->height;
   cntAlt = 0;
   initRefAlt = true;
+  calibrate_cnt = 0;
   /* debug print out */
   Serial.print("Reference altitude: ");
   Serial.println(refAltitude);
@@ -39,6 +40,23 @@ void Hover::Regulate(void) {
   /* debug values, simplifies tests */
   int     debug_maxEngineEffect = 50;
   boolean debug_setEngineEffect = false;
+
+  if (calibrate_cnt < 32) {
+    yaw_calibrate[calibrate_cnt] = sensor->angleYaw;
+    yaw_calibrate[calibrate_cnt] = sensor->angleYaw;
+    yaw_calibrate[calibrate_cnt] = sensor->angleYaw;  
+    ++calibrate_cnt;
+  } else if (calibrate_cnt == 32) {
+    for (int i = 0; i < 32; ++i) {
+      yaw_offset += yaw_calibrate[i];
+      pitch_offset += pitch_calibrate[i];
+      roll_offset += roll_calibrate[i];
+    }
+    yaw_offset /= 32;
+    pitch_offset /= 32;
+    roll_offset /= 32;
+    ++calibrate_cnt;
+  }
   
   meanAlt[cntAlt] = sensor->height;
   cntAlt = ++cntAlt % sampleAlt;
@@ -53,7 +71,7 @@ void Hover::Regulate(void) {
   }
   
   /* minimal interval between updates */
-  unsigned long minUpdateInterval = 1000000;
+  unsigned long minUpdateInterval = 200000;
   
   /* retrieve current time stamp */
   unsigned long currentTime = micros();
@@ -79,9 +97,16 @@ void Hover::Regulate(void) {
     float rfma;
     float cbh;
     float cbv;
-    float cba;
+    //float cba;
     float errorAltitude;
-     
+    
+    VectorInt16 cba = sensor->acc;
+    
+    Serial.println("acc x:");
+    Serial.println(cba.x);
+    //Serial.println(cba_y);
+    //Serial.println(cba_z);
+    
     /* retrieve height */
     lfmh = 0.4 * tan(sensor->anglePitch);
     rfmh = 0.4 * tan(sensor->angleRoll);
@@ -100,7 +125,7 @@ void Hover::Regulate(void) {
     /* retrieve acceleration */
     lfma = (lfmv - old_lfmv) / dt;
     rfma = (rfmv - old_rfmv) / dt;
-    cba = (cbv - old_cbv) / dt;
+    //cba = (cbv - old_cbv) / dt;
     
     /* difference in meters from reference altitude (desired altitude) */
     errorAltitude = refAltitude - cbh;
@@ -150,7 +175,7 @@ void Hover::Regulate(void) {
     old_cbv = cbv;
     old_lfma = lfma;
     old_rfma = rfma;
-    old_cba = cba;
+    //old_cba = cba;
     old_errorAltitude = errorAltitude;
     time = currentTime;
     
@@ -160,18 +185,18 @@ void Hover::Regulate(void) {
     Serial.println(errorAltitude * 10);
     Serial.print("D: ");
     Serial.println(((errorAltitude - old_errorAltitude) / dt) * 100);
-    */
+    
     Serial.print("Altitude: ");
     Serial.println(cbh);
-    /*
+    
     Serial.print("Velocity: ");
     Serial.println(cbv);s    
     Serial.print("Acceleration: ");
     Serial.println(cba);
-    */
+    
     Serial.print("Current speed (lf, [rf, lb, rb]): ");
     Serial.println(speed_lf);
-    /*
+    
     Serial.println(speed_rf);
     Serial.println(speed_lb);
     Serial.println(speed_rb);

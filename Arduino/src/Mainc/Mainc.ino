@@ -8,6 +8,8 @@
 #include "SensorDataStruct.h"
 #include "Hover.h"
 
+//change this variable to true if you want to turn on the regulator, Torbjörn.
+const bool regulator_activated = false;
 const float sea_press = 1013.25;
 
 /*========= Do not change this ===========*/
@@ -54,30 +56,31 @@ int mainf() {
   /*==================================*/
 
   /*==========Hover regulator=============*/
-  //Hover regulator;
+  Hover regulator;
   //Main regulator/sensor loop
   while (true) {
-    if (mpu.readYawPitchRoll(ypr)) {
+    if (mpu.readYawPitchRoll(ypr, &sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
       //send the sensorstruct to the raspberry
-      SensorDataToRasp(sensorData);
+      if (!regulator_activated)
+        SensorDataToRasp(sensorData);
 
       //init the regulator if it haven't not been done yet, must be initialized
       //with a valide height
-      /*if (!regulatorIsInitialized && temperature != 0 && pressure != 0) {
+      if (regulator_activated && !regulatorIsInitialized && sensorData.temperature != 0 && sensorData.pressure != 0) {
         Serial.print("initializing regulator with height: ");
-        Serial.println(height);
+        Serial.println(sensorData.height);
         Serial.print("Temp and pressure ");
-        Serial.println(temperature);
-        Serial.println(pressure);
+        Serial.println(sensorData.temperature);
+        Serial.println(sensorData.pressure);
         regulator.init(motor, &sensorData, 0.4);
         regulatorIsInitialized = true;
-      }*/
+      }
     }
 
-    //if(regulatorIsInitialized)
-    //  regulator.Regulate();
+    if (regulator_activated && regulatorIsInitialized)
+      regulator.Regulate();
   }
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.
@@ -99,7 +102,7 @@ void variableToRasp(const char *variableName, T data) {
   Serial.print("!");
 }
 
-void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]){
+void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]) {
   //temperature and pressure cannot be read directly after each other, it
   //must be a small delay between the two functioncalls.
   sensorData.temperature = baro.getTemperature(MS561101BA_OSR_4096);

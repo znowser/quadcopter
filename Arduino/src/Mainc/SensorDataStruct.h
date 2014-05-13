@@ -2,6 +2,7 @@
 #define SENSORDATA_STRUCT
 
 #include "Arduino.h"
+#include "helper_3dmath.h"
 
 /*======== Mapping of hardwarePins ========*/
 enum MotorPins { 
@@ -18,9 +19,12 @@ struct sensordata {
   float anglePitch;
   float angleRoll;
   /*Accelerations*/
+  VectorInt16 acc;
+
   float temperature;
   float pressure;
   float height;
+
 };
 
 #endif
