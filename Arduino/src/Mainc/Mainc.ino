@@ -9,7 +9,7 @@
 #include "Hover.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
-const bool regulator_activated = false;
+const bool regulator_activated = true;
 const float sea_press = 1013.25;
 
 /*========= Do not change this ===========*/
@@ -33,7 +33,6 @@ int mainf() {
   CellVoltage battery[3];
   sensordata sensorData;
   float ypr[3];
-  bool regulatorIsInitialized = false;
 
   /*==========Init Sensors============*/
   //init gyro and magnetic field
@@ -54,9 +53,14 @@ int mainf() {
   battery[cell2].init(A1);
   battery[cell3].init(A2);
   /*==================================*/
-
+/*
+  motor[leftfront].setSpeed(20);
+  motor[rightfront].setSpeed(20);
+  motor[leftback].setSpeed(20);
+  motor[rightback].setSpeed(20);
+*/
   /*==========Hover regulator=============*/
-  Hover regulator;
+  Hover regulator(motor, &sensorData, 0.5);
   //Main regulator/sensor loop
   while (true) {
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
@@ -65,23 +69,11 @@ int mainf() {
       //send the sensorstruct to the raspberry
       if (!regulator_activated)
         SensorDataToRasp(sensorData);
-
-      //init the regulator if it haven't not been done yet, must be initialized
-      //with a valide height
-      if (regulator_activated && !regulatorIsInitialized && sensorData.temperature != 0 && sensorData.pressure != 0) {
-        Serial.print("initializing regulator with height: ");
-        Serial.println(sensorData.height);
-        Serial.print("Temp and pressure ");
-        Serial.println(sensorData.temperature);
-        Serial.println(sensorData.pressure);
-        regulator.init(motor, &sensorData, 0.4);
-        regulatorIsInitialized = true;
-      }
+      if (regulator_activated)
+        regulator.Regulate();
     }
-
-    if (regulator_activated && regulatorIsInitialized)
-      regulator.Regulate();
   }
+
   //return 0 if nothing more shall be executed, otherwise the main-function will
   //be called again.
   return 0;

@@ -4,9 +4,6 @@
 #include "Motor.h"
 #include "SensorDataStruct.h"
 
-#define sampleAngle 24        // OBS must be divisible by three
-#define sampleAcceleration 9  // OBS must be divisible by three
-
 #define motorDistanceCentre 0.4
 
 /* OBSERVER!
@@ -28,28 +25,12 @@ private:
 	sensordata *sensor;
 
 	/* last call and last motor update */
-	unsigned long timestamp, timestampMotor;
-
-	/* Internal position from start*/
-	float positionRelative[3];
-	float positionDesired[3];
-	float positionErrorPrev[3];
-
-	/* calibration of angle */
-	int angleCalibrateCount;
-	float angleCalibrate[sampleAngle]; // # sample * (roll, pitch, yaw)
-
-	/* Angle offset, sets during calibration or zero */
-	float angleOffset[3]; //roll, pitch, yaw
-
-	/* to prevent freak values, acceleration from sensors are averages out on the 8 last values */
-	int accelerationBufferCounter;
-	float accelerationBuffer[sampleAcceleration]; // # sample * (x, y, z)
+	unsigned long timestamp, timestampMotor, timestampPrint;
 
 	/* Integrating part of PID */
-	float regI[3], regIM[2];
+	float regI[3];
 	/* old motor level error, (left and right front motor) */
-	float lmeOld, rmeOld;
+	float eRollOld, ePitchOld;
 
 	/* Internal speed when debugging without real engines */
 	float speed_lf;
@@ -58,10 +39,8 @@ private:
 	float speed_rb;	
 
 public:
-	Hover() {};
 	Hover(Motor *motors, sensordata *sensor, float refAltitude);
 	void init(Motor *motors, sensordata *sensor, float refAltitude);
-	bool Calibrate(void);
 	void Regulate(void);
 };
 
