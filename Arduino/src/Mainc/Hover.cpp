@@ -38,8 +38,14 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
 	angleOffset[PITCH] = 0;
 	angleOffset[YAW] = 0;
 
-	leftFrontMotorZOld = 0;
-	rightFrontMotorZOld = 0;
+	/*  */
+	regI[X] = 0;
+	regI[Y] = 0;
+	regI[Z] = 0;
+	regIM[0] = 0;
+	regIM[1] = 0;
+	lmeOld = 0;
+	lmeOld = 0;
 
 	/* Acceleration buffer values */
 	accelerationBufferCounter = 0;
@@ -111,8 +117,11 @@ void Hover::Regulate(void) {
 		Serial.println(positionRelative[Y]);
 		Serial.print("Z: ");
 		Serial.println(positionRelative[Z]);
-		Serial.print("Left motor simulated speed: ");
+		Serial.print("LF, RF, LB, RB speed: ");
 		Serial.println(speed_lf);
+		Serial.println(speed_rf);
+		Serial.println(speed_lb);
+		Serial.println(speed_rb);
 	}
 
 	/* debug values, simplifies tests */
@@ -124,33 +133,66 @@ void Hover::Regulate(void) {
 	 */
 	if (timestampCurrent - timestampMotor >= 1000){
 
-		/* TODO map motors to axis correct */
-		float leftFrontMotorZ;
-		float rightFrontMotorZ;
-		float posError[3];
+		/* retrieve LEFT and RIGHT motors in FRONT altitudes relative centre position */
+		/* LEFT and RIGHT motors in BACK will be opposite in altitude 
+		
+		   LF   RF         <- PID on front motors
+		     \ /
+		      C            <- PID on C position
+			 / \
+		   LB   RB         <- reversed effect from front motor PID
+		
+		*/		
+		
+		/* Calculate how large alteration is taken on current speed using basic PID!
+		 * Problem to tackle:
+		 * Need of different calibration for X, Y, Z?
+		 * Now to use the output to control position
+		 * Need for regulation on motor levels? (initially, very much yes!)
+		 */
 
-		/* retrieve motor altitudes relative centre position */
-		leftFrontMotorZ = motorDistanceCentre * tan(sensor->anglePitch);
-		rightFrontMotorZ = motorDistanceCentre * tan(sensor->angleRoll);
+		/* ===== position PID  ===== */
+		float Ts = timestampCurrent - timestampMotor;
+		float Ti = 100.0;  // Regulate integrator part of PID, set to inf to remove
+		float Td = 1000.0; // Regulate derivative part of PID
+		float K = 10.0;    // Level constant
+		float uX, uY, uZ;  // output
+		/* centre body position error */
+		float eX = positionDesired[X] - positionRelative[X];
+		float eY = positionDesired[Y] - positionRelative[Y];
+		float eZ = positionDesired[Z] - positionRelative[Z];
+		/* Integrator part */
+		regI[X] = regI[X] + (Ts / Ti) * eX;
+		regI[Y] = regI[Y] + (Ts / Ti) * eY;
+		regI[Z] = regI[Z] + (Ts / Ti) * eZ;
+		/* output */
+		uX = K * (eX + regI[X] + (Td / Ts) * (eX - positionErrorPrev[X]));
+		uY = K * (eY + regI[Y] + (Td / Ts) * (eY - positionErrorPrev[Y]));
+		uZ = K * (eZ + regI[Z] + (Td / Ts) * (eZ - positionErrorPrev[Z]));
 
-		/* relative altitude difference from desired altitude */
-		posError[Z] = positionDesired[Z] - positionRelative[Z];
+		/* ===== leveling PID ===== */
+		float Tli = 100.0;  // Regulate integrator part of PID, set to inf to remove
+		float Tld = 1000.0; // Regulate derivative part of PID
+		float Kl = 10.0;    // Level constant
+		float uLM, uRM;  // output
+		/* motor altitude error */
+		float lme = motorDistanceCentre * tan(sensor->anglePitch);
+		float rme = motorDistanceCentre * tan(sensor->angleRoll);
+		/* Integrator part */
+		regIM[0] = regIM[0] + (Tls / Tli) * lme;
+		regIM[1] = regIM[1] + (Tls / Tli) * rme;
+		/* output */
+		uLM = Kl * (lme + regIM[0] + (Tld / Tls) * (lme - lmeOld));
+		uRM = Kl * (rme + regIM[1] + (Tld / Tls) * (rme - rmeOld));
 
-		/* calculate how large alteration is taken on current speed. */
-		// OBS short-cut since dt = 1000 then the d-part is shortened
-		float regPD = posError[Z] * 10.0 + (posError[Z] - positionErrorPrev[Z]) * 0.1;
-		float regPDLM = leftFrontMotorZ * 10.0 + (leftFrontMotorZ - leftFrontMotorZOld) * 0.1;
-		float regPDRM = rightFrontMotorZ * 10.0 + (rightFrontMotorZ - rightFrontMotorZOld) * 0.1;
-
-		// DEBUG, do all changes equaly on all engines
-		regPDLM = 0.0;
-		regPDRM = 0.0;
+		/* ===== derictional mapping ===== */
+		// TODO how to use uX and uY
 
 		/* Set speed, limited to a max value TODO have this mapped correct! */
-		speed_lf = min(speed_lf + regPD + regPDLM, debug_maxMotorEffect);
-		speed_rf = min(speed_rf + regPD + regPDRM, debug_maxMotorEffect);
-		speed_lb = min(speed_lb + regPD - regPDRM, debug_maxMotorEffect);
-		speed_rb = min(speed_rb + regPD - regPDLM, debug_maxMotorEffect);
+		speed_lf = min(speed_lf + uZ + uLM, debug_maxMotorEffect);
+		speed_rf = min(speed_rf + uZ + uRM, debug_maxMotorEffect);
+		speed_lb = min(speed_lb + uZ - uRM, debug_maxMotorEffect);
+		speed_rb = min(speed_rb + uZ - uLM, debug_maxMotorEffect);
 
 		/* set engine speed value from 0 to 100 */
 		if (debug_setMotorEffect) {
@@ -161,11 +203,11 @@ void Hover::Regulate(void) {
 		}
 
 		/* store state */
-		leftFrontMotorZOld = leftFrontMotorZ;
-		rightFrontMotorZOld = rightFrontMotorZ;
-		positionErrorPrev[X] = posError[X];
-		positionErrorPrev[Y] = posError[Y];
-		positionErrorPrev[Z] = posError[Z];
+		lmeOld = lme;
+		rmeOld = rme;
+		positionErrorPrev[X] = eX;
+		positionErrorPrev[Y] = eY;
+		positionErrorPrev[Z] = eZ;
 		timestampMotor = timestampCurrent;
 	}  
 	timestamp = timestampCurrent;

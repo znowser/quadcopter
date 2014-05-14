@@ -46,8 +46,10 @@ private:
 	int accelerationBufferCounter;
 	float accelerationBuffer[sampleAcceleration]; // # sample * (x, y, z)
 
-	float leftFrontMotorZOld;
-	float rightFrontMotorZOld;
+	/* Integrating part of PID */
+	float regI[3], regIM[2];
+	/* old motor level error, (left and right front motor) */
+	float lmeOld, rmeOld;
 
 	/* Internal speed when debugging without real engines */
 	float speed_lf;
