@@ -1,2 +1,0 @@
-Use this pythonprogram with the arduinoprogram "I2CRaspTest" to check if the i2c-buss between the raspberry and the arduino is working.
-More info: http://hertaville.com/2013/04/01/interfacing-an-i2c-gpio-expander-mcp23017-to-the-raspberry-pi-using-c/ 
