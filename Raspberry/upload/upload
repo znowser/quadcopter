@@ -1,5 +1,16 @@
-B
+#!/bin/bash
+
+
+
+if [ $# -eq 0 ]
+  then
+    echo "File to upload must be given as argument"
+    exit
+fi
+
+
 sudo ./sleep_helper &
+
 #avrdude -C/etc/avrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:Mainc.cpp.hex:i
 
-avrdude -C/etc/avrdude.conf -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:Mainc.cpp.hex:i
+avrdude -C/etc/avrdude.conf -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:$1:i

@@ -3,9 +3,10 @@ echo 2 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio2/direction
 
 
-#sleep 0.1
+sleep 0.1
 echo "Pulling reset low"
 echo 0 > /sys/class/gpio/gpio2/value
-sleep 0.6
+sleep 0.4
 echo "Pulling it back high"
-echo 1 /sys/class/gpio/gpio2/value
+echo 1 > /sys/class/gpio/gpio2/value
+
