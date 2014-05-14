@@ -12,7 +12,7 @@ fi
 echo "Notice: "
 echo "== DONT TRY TO RUN MULTIPLE TERMINALS AT THE SAME TIME ON THE SERIAL BUSS =="
 
-sudo ./sleep_helper &
+sudo ./reset &
 
 #avrdude -C/etc/avrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:Mainc.cpp.hex:i
 
