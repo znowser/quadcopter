@@ -26,6 +26,7 @@ float getAltitude(float press, float temp);
 void SensorDataToRasp(const sensordata &data);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 template<class T> void variableToRasp(const char *variableName, T data);
+void checkEmergencyStop(Motor motor[4]);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf() {
   Serial.begin(115200);
@@ -33,6 +34,7 @@ int mainf() {
   CellVoltage battery[3];
   sensordata sensorData;
   float ypr[3];
+  int emergencycount = 0;
 
   /*==========Init Sensors============*/
   //init gyro and magnetic field
@@ -53,24 +55,29 @@ int mainf() {
   battery[cell2].init(A1);
   battery[cell3].init(A2);
   /*==================================*/
-/*
-  motor[leftfront].setSpeed(20);
-  motor[rightfront].setSpeed(20);
-  motor[leftback].setSpeed(20);
-  motor[rightback].setSpeed(20);
-*/
+  /*
+    motor[leftfront].setSpeed(20);
+    motor[rightfront].setSpeed(20);
+    motor[leftback].setSpeed(20);
+    motor[rightback].setSpeed(20);
+  */
   /*==========Hover regulator=============*/
   Hover regulator(motor, &sensorData, 0.5);
   //Main regulator/sensor loop
   while (true) {
+
+    //Emergency stop control
+    checkEmergencyStop(motor);
+
+    //check if there is new sensordata to recieve from the sensor card
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
-      //send the sensorstruct to the raspberry
-      if (!regulator_activated)
-        SensorDataToRasp(sensorData);
+      //send the sensorstruct to the raspberry or regulate
       if (regulator_activated)
         regulator.Regulate();
+      else
+        SensorDataToRasp(sensorData);
     }
   }
 
@@ -139,4 +146,27 @@ void SensorDataToRasp(const sensordata &data) {
   //quick fix, Each package that is sent to the raspberry must end
   //with a newline
   Serial.println();
+}
+
+ // If 10 or more '\n' are received after each other the arduino shall stop
+//the program and start doing nothing.
+void checkEmergencyStop(Motor motor[4]) {
+  //static shall always be inilitiazed to zero according to standard c.
+  static unsigned emergencycount;
+  
+  while (Serial.available() > 0) {
+    if (Serial.read() == '\n')
+      ++emergencycount;
+    else
+      emergencycount = 0;
+    while (emergencycount == 10) {
+      //Turn off all motors
+      motor[leftfront].setSpeed(0);
+      motor[rightfront].setSpeed(0);
+      motor[leftback].setSpeed(0);
+      motor[rightback].setSpeed(0);
+      Serial.println("Emergency stopp pressed!");
+    }
+  }
+
 }
