@@ -7,6 +7,7 @@
 #include "MS561101BA.h"
 #include "SensorDataStruct.h"
 #include "Hover.h"
+#include "SerialBuss.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
 const bool regulator_activated = true;
@@ -23,16 +24,19 @@ void loop() {
 /*========================================*/
 
 float getAltitude(float press, float temp);
+void sendRasp(byte id, unsigned len, char* data);
+void recvRasp(byte id, unsigned len, char* data);
 void SensorDataToRasp(const sensordata &data);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 template<class T> void variableToRasp(const char *variableName, T data);
-void checkEmergencyStop(Motor motor[4]);
+void emergencyStopCallback(char *data, int len, void *additional_info);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf() {
-  Serial.begin(115200);
+  SerialBuss serial;
   Motor motor[4];
   CellVoltage battery[3];
   sensordata sensorData;
+
   float ypr[3];
   int emergencycount = 0;
 
@@ -61,16 +65,21 @@ int mainf() {
     motor[leftback].setSpeed(20);
     motor[rightback].setSpeed(20);
   */
+  serial.registerCallback(emergencyStopCallback, motor, 0x01);
   /*==========Hover regulator=============*/
   Hover regulator(motor, &sensorData, 0.5);
   //Main regulator/sensor loop
   while (true) {
 
+    //TODO continue to implement the new buss protocol
+    
+    serial.recvRasp();
+    //serial.sendRasp(0x01, 4, "Erik");
     //Emergency stop control
-    checkEmergencyStop(motor);
+    //checkEmergencyStop(motor);
 
     //check if there is new sensordata to recieve from the sensor card
-    if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
+    /*if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
       //send the sensorstruct to the raspberry or regulate
@@ -78,7 +87,7 @@ int mainf() {
         regulator.Regulate();
       else
         SensorDataToRasp(sensorData);
-    }
+    }*/
   }
 
   //return 0 if nothing more shall be executed, otherwise the main-function will
@@ -148,25 +157,11 @@ void SensorDataToRasp(const sensordata &data) {
   Serial.println();
 }
 
- // If 10 or more '\n' are received after each other the arduino shall stop
-//the program and start doing nothing.
-void checkEmergencyStop(Motor motor[4]) {
-  //static shall always be inilitiazed to zero according to standard c.
-  static unsigned emergencycount;
-  
-  while (Serial.available() > 0) {
-    if (Serial.read() == '\n')
-      ++emergencycount;
-    else
-      emergencycount = 0;
-    while (emergencycount == 10) {
-      //Turn off all motors
-      motor[leftfront].setSpeed(0);
-      motor[rightfront].setSpeed(0);
-      motor[leftback].setSpeed(0);
-      motor[rightback].setSpeed(0);
-      Serial.println("Emergency stopp pressed!");
-    }
-  }
-
+void emergencyStopCallback(char *data, int len, void *additional_info) {
+  Motor *motor = (Motor*)additional_info;
+  //Turn off all motors
+  motor[leftfront].setSpeed(0);
+  motor[rightfront].setSpeed(0);
+  motor[leftback].setSpeed(0);
+  motor[rightback].setSpeed(0);
 }
