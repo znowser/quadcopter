@@ -14,7 +14,7 @@ SerialBuss::SerialBuss() {
   memset(headerBuffer, 0, HEADER_BUFFER_SIZE * sizeof(headerBuffer));
 }
 
-void SerialBuss::sendRasp(char id, unsigned len, char* data) {
+void SerialBuss::sendRasp(char id, char* data, unsigned len) {
   char length[10];
   memset(length, 0, 10);
   itoa(len, length, 10);

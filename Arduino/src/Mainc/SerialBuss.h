@@ -34,7 +34,7 @@ class SerialBuss {
   public:
     SerialBuss();
     void registerCallback(callbck func, void *ptr, char id);
-    void sendRasp(char id, unsigned len, char* data);
+    void sendRasp(char id, char* data, unsigned len);
     void recvRasp();
 };
 
