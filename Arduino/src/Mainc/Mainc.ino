@@ -11,7 +11,7 @@
 
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
-const bool regulator_activated = false;
+const bool regulator_activated = true;
 const float sea_press = 1013.25;
 
 /*========= Do NOT change this ===========*/

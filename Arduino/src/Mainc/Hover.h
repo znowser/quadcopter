@@ -15,33 +15,40 @@
 
 
 class Hover {
-private:
+  private:
 
-	enum Angle { ROLL = 0, PITCH = 1, YAW = 2 };
-	enum Position { X = 0, Y = 1, Z = 2 };
+    enum Angle { ROLL = 0, PITCH = 1, YAW = 2 };
+    enum Position { X = 0, Y = 1, Z = 2 };
 
-	/* Hardware */
-	Motor *motors;
-	sensordata *sensor;
+    /* Hardware */
+    Motor *motors;
+    sensordata *sensor;
 
-	/* last call and last motor update */
-	unsigned long timestamp, timestampMotor, timestampPrint;
+    /* last call and last motor update */
+    unsigned long timestamp, timestampCurrent, timestampMotor, timestampPrint;
+    float dt;
+    
+    float a[3][2];
+    float v[3][2];
+    float p[3][2];
 
-	/* Integrating part of PID */
-	float regI[3];
-	/* old motor level error, (left and right front motor) */
-	float eRollOld, ePitchOld;
+    /* Integrating part of PID */
+    float regI[3];
+    /* old motor level error, (left and right front motor) */
+    float eRollOld, ePitchOld;
 
-	/* Internal speed when debugging without real engines */
-	float speed_lf;
-	float speed_rf;
-	float speed_lb;
-	float speed_rb;	
+    /* Internal speed when debugging without real engines */
+    float speed_lf;
+    float speed_rf;
+    float speed_lb;
+    float speed_rb;
 
-public:
-	Hover(Motor *motors, sensordata *sensor, float refAltitude);
-	void init(Motor *motors, sensordata *sensor, float refAltitude);
-	void Regulate(void);
+    void integrate(float v[3][2], float a[3][2]);
+
+  public:
+    Hover(Motor *motors, sensordata *sensor, float refAltitude);
+    void init(Motor *motors, sensordata *sensor, float refAltitude);
+    void Regulate(void);
 };
 
 #endif
