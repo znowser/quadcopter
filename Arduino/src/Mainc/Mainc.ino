@@ -7,8 +7,7 @@
 #include "SensorDataStruct.h"
 #include "Hover.h"
 #include "SerialBuss.h"
-#include "ExtendedFloatSupport.h"
-
+#include "BussProtocol.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
 const bool regulator_activated = true;
@@ -25,10 +24,7 @@ void loop() {
 /*========================================*/
 
 float getAltitude(float press, float temp);
-char* buildSensorPackage(const sensordata &data, char* res, int &len);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
-void emergencyStopCallback(char *data, int len, void *additional_info);
-void ps3DataCallback(char *data, int len, void *additional_info);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf() {
   SerialBuss serial;
@@ -58,8 +54,7 @@ int mainf() {
   battery[cell3].init(A2);
   /*==================================*/
 
-  serial.registerCallback(emergencyStopCallback, motor, 0x01);
-  serial.registerCallback(ps3DataCallback, &sensorData, 0x03);
+  serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
   /*==========Hover regulator=============*/
   Hover regulator(motor, &sensorData, 0.5);
   //Main regulator/sensor loop
@@ -67,7 +62,7 @@ int mainf() {
   char tmp[200];
   while (true) {
     //TODO continue to implement the new buss protocol
-    //serial.recvRasp();
+    serial.recvRasp();
 
     //check if there is new sensordata to recieve from the sensor card
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
@@ -76,10 +71,8 @@ int mainf() {
       //send the sensorstruct to the raspberry or regulate
       if (regulator_activated)
         regulator.Regulate();
-      else {
-        serial.sendRasp(0x01, buildSensorPackage(sensorData, tmp, len), len);
-        memset(tmp, 0, sizeof(tmp));
-      }
+      else
+        serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
     }
   }
 
@@ -115,45 +108,6 @@ void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage batt
   sensorData.height = getAltitude(sensorData.pressure, sensorData.temperature);
 }
 
-//Function that send away the whole sensorstruct to the rasp
-//Format the package by martins format
-char* buildSensorPackage(const sensordata &data, char* res, int &len) {
-  char tmp[10];
 
-  len = 0;
-  len += sprintf(&res[len], "c1:%d!", (int)data.cellVoltage[cell1]);
-  len += sprintf(&res[len], "c2:%d!", (int)data.cellVoltage[cell2]);
-  len += sprintf(&res[len], "c3:%d!", (int)data.cellVoltage[cell3]);
 
-  len += sprintf(&res[len], "lf:%d!", data.motorSpeed[leftfront]);
-  len += sprintf(&res[len], "rf:%d!", data.motorSpeed[rightfront]);
-  len += sprintf(&res[len], "lb:%d!", data.motorSpeed[leftback]);
-  len += sprintf(&res[len], "rb:%d!", data.motorSpeed[rightback]);
 
-  //workaround because AVR IDE doesn't support sprintf with %f....
-  fmtDouble(data.temperature, 2, tmp, 10);
-  len += sprintf(&res[len], "temp:%s!", tmp);
-  fmtDouble(data.height, 2, tmp, 10);
-  len += sprintf(&res[len], "height:%s!", tmp);
-
-  fmtDouble(data.angleYaw, 2, tmp, 10);
-  len += sprintf(&res[len], "yaw:%s!", tmp);
-  fmtDouble(data.anglePitch, 2, tmp, 10);
-  len += sprintf(&res[len], "ptich:%s!", tmp);
-  fmtDouble(data.angleRoll, 2, tmp, 10);
-  len += sprintf(&res[len], "roll:%s!", tmp);
-  return res;
-}
-
-void emergencyStopCallback(char *data, int len, void *additional_info) {
-  Motor *motor = (Motor*)additional_info;
-  //Turn off all motors
-  motor[leftfront].setSpeed(0);
-  motor[rightfront].setSpeed(0);
-  motor[leftback].setSpeed(0);
-  motor[rightback].setSpeed(0);
-}
-
-void ps3DataCallback(char *data, int len, void *additional_info) {
-
-}
