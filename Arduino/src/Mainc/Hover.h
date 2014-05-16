@@ -7,48 +7,55 @@
 #define motorDistanceCentre 0.4
 
 /* OBSERVER!
- * How to run this regulator:
- * 1. Run init
- * 2. Run Calibrate until it returns true
- * 3. Run Regulate as many times regulation is needed
- */
+* How to run this regulator:
+* 1. Run init
+* 2. Run Calibrate until it returns true
+* 3. Run Regulate as many times regulation is needed
+*/
 
 
 class Hover {
-  private:
+private:
 
-    enum Angle { ROLL = 0, PITCH = 1, YAW = 2 };
-    enum Position { X = 0, Y = 1, Z = 2 };
+  enum Angle { ROLL = 0, PITCH = 1, YAW = 2 };
+  enum Position { X = 0, Y = 1, Z = 2 };
+  enum Reg { axisX = 0, axisY = 1, axisZ = 2, axisRo = 3, axisPi = 4, axisYa = 5 };
 
-    /* Hardware */
-    Motor *motors;
-    sensordata *sensor;
+  /* Debug */
+  int debug_maxMotorEffect;
 
-    /* last call and last motor update */
-    unsigned long timestamp, timestampCurrent, timestampMotor, timestampPrint;
-    float dt;
-    
-    float a[3][2];
-    float v[3][2];
-    float p[3][2];
+  /* Hardware */
+  Motor *motors;
+  sensordata *sensor;
 
-    /* Integrating part of PID */
-    float regI[3];
-    /* old motor level error, (left and right front motor) */
-    float eRollOld, ePitchOld;
+  /* last call and last motor update */
+  unsigned long timestamp, timestampCurrent, timestampMotor, timestampPrint;
+  float dt;
 
-    /* Internal speed when debugging without real engines */
-    float speed_lf;
-    float speed_rf;
-    float speed_lb;
-    float speed_rb;
+  /* Calibration */
+  int calCnt;
+  int sstate[3];
+  int min[3], max[3];
 
-    void integrate(float v[3][2], float a[3][2]);
+  int sampleCnt, sampleSize;
+  float acc[3];
+  float a[3][2], v[3][2], p[3][2];
+  float pRef[3];
 
-  public:
-    Hover(Motor *motors, sensordata *sensor, float refAltitude);
-    void init(Motor *motors, sensordata *sensor, float refAltitude);
-    void Regulate(void);
+  /* PID */
+  float Ts;
+  float Ti[6], Td[6], K[6], I[6], e[6], eOld[6], u[6];
+
+  /* Internal speed when debugging without real engines */
+  float speed_lf, speed_rf, speed_lb, speed_rb;
+
+  void integrate(float v[3][2], float a[3][2]);
+
+public:
+  Hover(Motor *motors, sensordata *sensor, float refAltitude);
+  void init(Motor *motors, sensordata *sensor, float refAltitude);
+  void Calibrate(void);
+  void Regulate(void);
 };
 
 #endif
