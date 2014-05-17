@@ -46,7 +46,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   speed[RF] = motors[RF].getSpeed();
   speed[LB] = motors[LB].getSpeed();
   speed[RF] = motors[RF].getSpeed();
-
+  
   speed[LF] = speed[RF] = speed[LB] = speed[RB] = 50;
 }
 
@@ -154,6 +154,7 @@ void Hover::Regulate(void) {
     speed[LB] = speed[LB] < 10 ? 10 : speed[LB];
     speed[RB] = speed[RB] < 10 ? 10 : speed[RB];
 
+    /* set engine speed value from 0 to 100 */
     if (false) {
       motors[LF].setSpeed(speed[LF]);
       motors[RF].setSpeed(speed[RF]);

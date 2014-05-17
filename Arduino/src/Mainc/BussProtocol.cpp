@@ -10,14 +10,14 @@ char* buildSensorPackage(const sensordata &data, char* res, int &len) {
 	char tmp[10];
 
 	len = 0;
-	len += sprintf(&res[len], "c1:%d!", (int)data.cellVoltage[cell1]);
-	len += sprintf(&res[len], "c2:%d!", (int)data.cellVoltage[cell2]);
-	len += sprintf(&res[len], "c3:%d!", (int)data.cellVoltage[cell3]);
+	len += sprintf(&res[len], "c1:%d!", (int)data.cellVoltage[CELL1]);
+	len += sprintf(&res[len], "c2:%d!", (int)data.cellVoltage[CELL2]);
+	len += sprintf(&res[len], "c3:%d!", (int)data.cellVoltage[CELL3]);
 
-	len += sprintf(&res[len], "lf:%d!", data.motorSpeed[leftfront]);
-	len += sprintf(&res[len], "rf:%d!", data.motorSpeed[rightfront]);
-	len += sprintf(&res[len], "lb:%d!", data.motorSpeed[leftback]);
-	len += sprintf(&res[len], "rb:%d!", data.motorSpeed[rightback]);
+	len += sprintf(&res[len], "lf:%d!", data.motorSpeed[LF]);
+	len += sprintf(&res[len], "rf:%d!", data.motorSpeed[RF]);
+	len += sprintf(&res[len], "lb:%d!", data.motorSpeed[LB]);
+	len += sprintf(&res[len], "rb:%d!", data.motorSpeed[RB]);
 
 	//workaround because AVR IDE doesn't support sprintf with %f....
 	fmtDouble(data.temperature, 2, tmp, 10);
@@ -37,10 +37,10 @@ char* buildSensorPackage(const sensordata &data, char* res, int &len) {
 void emergencyStopCallback(char *data, int len, void *additional_info) {
 	Motor *motor = (Motor*)additional_info;
 	//Turn off all motors
-	motor[leftfront].setSpeed(0);
-	motor[rightfront].setSpeed(0);
-	motor[leftback].setSpeed(0);
-	motor[rightback].setSpeed(0);
+	motor[LF].setSpeed(0);
+	motor[RF].setSpeed(0);
+	motor[LB].setSpeed(0);
+	motor[RB].setSpeed(0);
 }
 
 void ps3DataCallback(char *data, int len, void *additional_info) {

@@ -10,7 +10,7 @@
 //#include "BussProtocol.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
-const bool regulator_activated = true;
+const bool regulator_activated = false;
 const float sea_press = 1013.25;
 
 /*========= Do NOT change this ===========*/
@@ -42,16 +42,16 @@ int mainf() {
   /*===================================*/
   //*==========Init Motors=============*/
   //Hardware mapping of motors
-  motor[leftfront].init(10);
-  motor[rightfront].init(11);
-  motor[leftback].init(12);
-  motor[rightback].init(13);
+  motor[LF].init(10);
+  motor[RF].init(11);
+  motor[LB].init(12);
+  motor[RB].init(13);
   /*==================================*/
   /*=====Init battery cells ==========*/
   //Hardware mapping of battery cells
-  battery[cell1].init(A0);
-  battery[cell2].init(A1);
-  battery[cell3].init(A2);
+  battery[CELL1].init(A0);
+  battery[CELL2].init(A1);
+  battery[CELL3].init(A2);
   /*==================================*/
 
   //serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
@@ -94,14 +94,14 @@ void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage batt
   sensorData.angleYaw = ypr[0]  * 180 / M_PI;
   sensorData.anglePitch = ypr[1]  * 180 / M_PI;
   sensorData.angleRoll = ypr[2]  * 180 / M_PI;
-  sensorData.cellVoltage[cell1] = battery[cell1].getVoltage();
-  sensorData.cellVoltage[cell2] = battery[cell2].getVoltage();
-  sensorData.cellVoltage[cell3] = battery[cell3].getVoltage();
+  sensorData.cellVoltage[CELL1] = battery[CELL1].getVoltage();
+  sensorData.cellVoltage[CELL2] = battery[CELL2].getVoltage();
+  sensorData.cellVoltage[CELL3] = battery[CELL3].getVoltage();
   //update motor speed
-  sensorData.motorSpeed[leftfront] = motor[leftfront].getSpeed();
-  sensorData.motorSpeed[rightfront] = motor[rightfront].getSpeed();
-  sensorData.motorSpeed[leftback] = motor[leftback].getSpeed();
-  sensorData.motorSpeed[rightback] = motor[rightback].getSpeed();
+  sensorData.motorSpeed[LF] = motor[LF].getSpeed();
+  sensorData.motorSpeed[RF] = motor[RF].getSpeed();
+  sensorData.motorSpeed[LB] = motor[LB].getSpeed();
+  sensorData.motorSpeed[RB] = motor[RB].getSpeed();
   //get pressure, cannot be done directly after getTemperature, The sensorcard need
   //a small delay between the function calls.
   sensorData.pressure = baro.getPressure(MS561101BA_OSR_4096);
