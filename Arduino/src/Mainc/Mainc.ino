@@ -6,11 +6,11 @@
 #include "MS561101BA.h"
 #include "SensorDataStruct.h"
 #include "Hover.h"
-//#include "SerialBuss.h"
-//#include "BussProtocol.h"
+#include "SerialBuss.h"
+#include "BussProtocol.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
-const bool regulator_activated = false;
+const bool regulator_activated = true;
 const float sea_press = 1013.25;
 
 /*========= Do NOT change this ===========*/
@@ -27,7 +27,7 @@ float getAltitude(float press, float temp);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf() {
-  //SerialBuss serial;
+  SerialBuss serial;
   Motor motor[4];
   CellVoltage battery[3];
   sensordata sensorData;
@@ -69,7 +69,7 @@ int mainf() {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
       //send the sensorstruct to the raspberry or regulate
-      if (regulator_activated)
+      if (regulator_activated && regulator.Calibrate())
         regulator.Regulate();
       //else
        // serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
