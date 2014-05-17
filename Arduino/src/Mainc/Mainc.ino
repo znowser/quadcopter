@@ -54,7 +54,7 @@ int mainf() {
   battery[CELL3].init(A2);
   /*==================================*/
 
-  //serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
+  serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
   /*==========Hover regulator=============*/
   Hover regulator(motor, &sensorData, 0.5);
   //Main regulator/sensor loop
@@ -62,7 +62,7 @@ int mainf() {
   char tmp[200];
   while (true) {
     //TODO continue to implement the new buss protocol
-    //serial.recvRasp();
+  //  serial.recvRasp();
 
     //check if there is new sensordata to recieve from the sensor card
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
@@ -71,8 +71,8 @@ int mainf() {
       //send the sensorstruct to the raspberry or regulate
       if (regulator_activated)
         regulator.Regulate();
-      //else
-       // serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
+   //   else
+   //     serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
     }
   }
 

@@ -49,7 +49,7 @@ void SerialBuss::recvRasp() {
         } while (headerBuffer[++i] != 0x00 && i < HEADER_BUFFER_SIZE - 1);
 
         //allocate space for the new package
-        data = new char[dataLength];
+        //data = new char[dataLength];
         //skip the ++dataPos
         continue;
       }
@@ -64,7 +64,7 @@ void SerialBuss::recvRasp() {
 
         dataPos = 0;
         readingHeader = true;
-        delete[] data;
+        //delete[] data;
         //skip the ++dataPos
         continue;
       }
