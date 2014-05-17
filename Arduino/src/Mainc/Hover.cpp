@@ -31,10 +31,10 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   p[Z][1] = 0.f;
 
   /* Initial motor speed, range 0 - 100 */
-  speed_lf = motors[leftfront].getSpeed();
-  speed_rf = motors[rightfront].getSpeed();
-  speed_lb = motors[leftback].getSpeed();
-  speed_rb = motors[rightfront].getSpeed();
+  speed_lf = motors[LF].getSpeed();
+  speed_rf = motors[RF].getSpeed();
+  speed_lb = motors[LB].getSpeed();
+  speed_rb = motors[RB].getSpeed();
 
   speed_lf = 50;
   speed_rf = 50;
@@ -159,10 +159,10 @@ void Hover::Regulate(void) {
 
     /* set engine speed value from 0 to 100 */
     if (debug_setMotorEffect) {
-      motors[leftfront].setSpeed(speed_lf);
-      motors[rightfront].setSpeed(speed_rf);
-      motors[leftback].setSpeed(speed_lb);
-      motors[rightback].setSpeed(speed_rb);
+      motors[LF].setSpeed(speed_lf);
+      motors[RF].setSpeed(speed_rf);
+      motors[LB].setSpeed(speed_lb);
+      motors[RB].setSpeed(speed_rb);
     }
 
     /* store state */

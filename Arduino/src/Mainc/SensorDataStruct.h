@@ -27,12 +27,15 @@
 #define NUM_OF_BUTTONS 17
 #define PS3CONTROLLER_DEADZONE 30
 
-/*======== Mapping of hardwarePins ========*/
-enum MotorPins { 
-  leftfront = 0, rightfront = 1, leftback = 2, rightback = 3}; 
-enum CellPins{
-  cell1 = 0, cell2 = 1, cell3 = 2};
-/*=========================================*/
+
+#define LF 0  //left front
+#define RF 1  //right front
+#define LB 2  //left back
+#define RB 3  //right back
+
+#define CELL1 0
+#define CELL2 1
+#define CELL3 2
 
 struct ps3Controller {
   int button[NUM_OF_BUTTONS];
