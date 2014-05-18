@@ -137,7 +137,7 @@ void Hover::Regulate(void) {
     e[axisZ] = pRef[Z] - p[Z];
     e[axisRo] = sensor->anglePitch < 0 ? 360 - sensor->anglePitch : sensor->anglePitch; // Positive means right side above left.
     e[axisPi] = sensor->anglePitch < 0 ? 360 - sensor->anglePitch : sensor->anglePitch; // Positive pitch means front is above back.
-    e[axisYa] = 0.f;
+    e[axisYa] = 0.f; // direction 
     /* Integrator part */
     I[axisX] = I[axisX] + (Ts / Ti[axisX]) * e[axisX];
     I[axisY] = I[axisY] + (Ts / Ti[axisY]) * e[axisY];
