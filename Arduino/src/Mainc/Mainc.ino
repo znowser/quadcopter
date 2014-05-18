@@ -42,16 +42,16 @@ int mainf() {
   /*===================================*/
   //*==========Init Motors=============*/
   //Hardware mapping of motors
-  motor[leftfront].init(10);
-  motor[rightfront].init(11);
-  motor[leftback].init(12);
-  motor[rightback].init(13);
+  motor[LF].init(10);
+  motor[RF].init(11);
+  motor[LB].init(12);
+  motor[RB].init(13);
   /*==================================*/
   /*=====Init battery cells ==========*/
   //Hardware mapping of battery cells
-  battery[cell1].init(A0);
-  battery[cell2].init(A1);
-  battery[cell3].init(A2);
+  battery[CELL1].init(A0);
+  battery[CELL2].init(A1);
+  battery[CELL3].init(A2);
   /*==================================*/
 
   serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
@@ -62,17 +62,17 @@ int mainf() {
   char tmp[200];
   while (true) {
     //TODO continue to implement the new buss protocol
-    serial.recvRasp();
+  //  serial.recvRasp();
 
     //check if there is new sensordata to recieve from the sensor card
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
       //send the sensorstruct to the raspberry or regulate
-      if (regulator_activated)
+      if (regulator_activated && regulator.Calibrate())
         regulator.Regulate();
-      else
-        serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
+   //   else
+   //     serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
     }
   }
 
@@ -94,14 +94,14 @@ void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage batt
   sensorData.angleYaw = ypr[0]  * 180 / M_PI;
   sensorData.anglePitch = ypr[1]  * 180 / M_PI;
   sensorData.angleRoll = ypr[2]  * 180 / M_PI;
-  sensorData.cellVoltage[cell1] = battery[cell1].getVoltage();
-  sensorData.cellVoltage[cell2] = battery[cell2].getVoltage();
-  sensorData.cellVoltage[cell3] = battery[cell3].getVoltage();
+  sensorData.cellVoltage[CELL1] = battery[CELL1].getVoltage();
+  sensorData.cellVoltage[CELL2] = battery[CELL2].getVoltage();
+  sensorData.cellVoltage[CELL3] = battery[CELL3].getVoltage();
   //update motor speed
-  sensorData.motorSpeed[leftfront] = motor[leftfront].getSpeed();
-  sensorData.motorSpeed[rightfront] = motor[rightfront].getSpeed();
-  sensorData.motorSpeed[leftback] = motor[leftback].getSpeed();
-  sensorData.motorSpeed[rightback] = motor[rightback].getSpeed();
+  sensorData.motorSpeed[LF] = motor[LF].getSpeed();
+  sensorData.motorSpeed[RF] = motor[RF].getSpeed();
+  sensorData.motorSpeed[LB] = motor[LB].getSpeed();
+  sensorData.motorSpeed[RB] = motor[RB].getSpeed();
   //get pressure, cannot be done directly after getTemperature, The sensorcard need
   //a small delay between the function calls.
   sensorData.pressure = baro.getPressure(MS561101BA_OSR_4096);

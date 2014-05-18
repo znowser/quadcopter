@@ -23,7 +23,7 @@ void SerialBuss::sendRasp(char id, char* data, unsigned len) {
 
   //Ensure that all data is always sent
   while (Serial.write(id) != 1);
-  while ((bytesSent += Serial.write(length + bytesSent, lenSize - bytesSent)) != lenSize);
+  while ((bytesSent += Serial.write(&length[lenSize - 1] - bytesSent, 1)) != lenSize);
   while (Serial.write(0x00) != 1);
   bytesSent = 0;
   while ((bytesSent += Serial.write(data + bytesSent, len - bytesSent)) != len);
@@ -49,7 +49,7 @@ void SerialBuss::recvRasp() {
         } while (headerBuffer[++i] != 0x00 && i < HEADER_BUFFER_SIZE - 1);
 
         //allocate space for the new package
-        data = new char[dataLength];
+        //data = new char[dataLength];
         //skip the ++dataPos
         continue;
       }
@@ -64,7 +64,7 @@ void SerialBuss::recvRasp() {
 
         dataPos = 0;
         readingHeader = true;
-        delete[] data;
+        //delete[] data;
         //skip the ++dataPos
         continue;
       }
