@@ -18,6 +18,7 @@
 #define axisYa 5
 
 class Hover {
+
 private:
 
   /* Debug */
@@ -27,14 +28,13 @@ private:
   Motor *motors;
   sensordata *sensor;
 
-  /* last call and last motor update */
-  unsigned long timestamp, timestampCurrent, timestampMotor, timestampPrint;
-  unsigned long dt;
+  /* time and  */
+  unsigned long dt, timestamp, timestampCurrent, timestampMotor, timestampPrint;  
 
   /* Calibration */
   int calCnt;
   int sstate[3];
-  int min, max;
+  int deadzone_min, deadzone_max;
 
   int sampleCnt, sampleSize;
   //float rawToSI;
@@ -54,6 +54,7 @@ public:
   void init(Motor *motors, sensordata *sensor, float refAltitude);
   bool Calibrate(void);
   void Regulate(void);
+
 };
 
 #endif
