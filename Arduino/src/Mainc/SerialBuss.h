@@ -1,11 +1,16 @@
 #ifndef SERIALBUSS_H
 #define SERIALBUSS_H
 
-//only needed for the #define NUM_OF_PACKAGES ..n 
+//only needed for the #define NUM_OF_PACKAGES ..n
 #include "BussProtocol.h"
 
 #define BAUDRATE 115200
-#define HEADER_BUFFER_SIZE 11
+#define HEADER_BUFFER_SIZE 4
+#define MAX_PACKAGE_SIZE 500
+#define SYNC_PACKAGE 0xFE
+#define SYNC_DATA 0x01
+#define MAX_PACKAGE_SIZE 500
+
 //This define must be updated if new packages are added
 
 //=== Package format ===
@@ -25,13 +30,17 @@ class SerialBuss {
     int dataPos;
     char *data;
     int dataLength;
+    bool waitForSync;
+    int syncTimeOut;
     callbck funcs[NUM_OF_PACKAGES + 1];
     void* additional_info[NUM_OF_PACKAGES + 1];
+    static unsigned potensOfTen(unsigned i);
   public:
     SerialBuss();
     void registerCallback(callbck func, void *ptr, char id);
     void sendRasp(char id, char* data, unsigned len);
     void recvRasp();
+    void sync();
 };
 
 #endif
