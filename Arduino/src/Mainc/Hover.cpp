@@ -9,14 +9,10 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   /* Hardware */
   this->motors = motors;
   this->sensor = sensor;
-  timestampPrint = timestampMotor = timestamp = micros();
+  timestampMotor = timestamp = micros();
 
   /* Debug */
   debug_maxMotorEffect = 100;
-
-  /* Calibration */
-  // Starts with a negative value so it can run that many times (so sensorvalues stabilize?)
-  calCnt = -512;
 
   // Number of samples to create the average sensor values on
   sampleSize = 4;
@@ -25,12 +21,13 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   sampleCnt = 0;
 
   // Deadzone threshold for sensors.
-  min = -5;
-  max = 5;
+  deadzone_min = -64;
+  deadzone_max = 64;
+  start_up = 0;
 
   /* acceleration, velocity and position */
   for (int i = 0; i < 3; ++i)
-    acc[i] = a[i][0] = a[i][1] = v[i][0] = v[i][1] = p[i][0] = p[i][1] = pRef[i] = sstate[i] = 0;
+    acc[i] = a[i][0] = a[i][1] = v[i][0] = v[i][1] = p[i][0] = p[i][1] = pRef[i] = 0;
 
   /* regulation variable, can later be optimized (codewise) */
   for (int i = 0; i < 6; ++i) {
@@ -49,65 +46,46 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
 
   /* Internal speed variable */
   speed[LF] = speed[RF] = speed[LB] = speed[RB] = 50;
-
+  debug_print = -1024;
   Serial.println("Hoverregulator initialized");
 }
 
 /* Calibrates sensorvalues by sampling a number of times and then average on those values */
 bool Hover::Calibrate() {
-  if (calCnt > 1023) {
-    return true;
-  } else {    
-    if (++calCnt > 512) {
-      sstate[X] += sensor->acc.x;
-      sstate[Y] += sensor->acc.y;
-      sstate[Z] += sensor->acc.z;
-      // sample 512 times before getting the actual average.
-      if (calCnt == 1024) {
-        sstate[X] = (sstate[X] / 512);
-        sstate[Y] = (sstate[Y] / 512);
-        sstate[Z] = (sstate[Z] / 512);
-        Serial.println("Calibration complete");
-        Serial.print("Offset X:");
-        Serial.println(sstate[X]);
-        Serial.print("Offset Y:");
-        Serial.println(sstate[Y]);
-        Serial.print("Offset Z:");
-        Serial.println(sstate[Z]);
-        return true;
-      }
-    }
-  }
-  return false;
+  return ++start_up >= 768;
 }
 
 void Hover::Regulate(void) {
-  timestampCurrent = micros();
+  //timestampCurrent = micros();
 
   /* This must be checked! Very important that dt is the same every time! */
-  dt = timestampCurrent - timestamp;
+  //dt = timestampCurrent - timestamp;
 
   /* Sample values using filtration of low values. */
-  acc[X] += (sensor->acc.x < min || sensor->acc.x > max) ? sensor->acc.x : 0;
-  acc[Y] += (sensor->acc.y < min || sensor->acc.y > max) ? sensor->acc.y : 0;
-  acc[Z] += (sensor->acc.z < min || sensor->acc.z > max) ? sensor->acc.z : 0;
+  //acc[X] += sensor->acc.x;
+  //acc[Y] += sensor->acc.y;
+  //acc[Z] += sensor->acc.z;
+  //sampleCnt++;
 
-  if (++sampleCnt % sampleSize == 0) {
+  //if (dt > 100000) {
 
     // Get acceleration
-    a[X][1] = (acc[X] - sstate[X]) / 4;
-    a[Y][1] = (acc[Y] - sstate[Y]) / 4;
-    a[Z][1] = (acc[Z] - sstate[Z]) / 4;
+    //a[X][1] = acc[X] / sampleCnt;
+    //a[Y][1] = acc[Y] / sampleCnt;
+    //a[Z][1] = acc[Z] / sampleCnt;
+    a[X][1] = sensor->acc.x;
+    a[Y][1] = sensor->acc.y;
+    a[Z][1] = sensor->acc.z / 32;
 
     // Get velocity
-    v[X][1] = v[X][0] + a[X][0] + (a[X][1] - a[X][0]) / 2;
-    v[Y][1] = v[Y][0] + a[Y][0] + (a[Y][1] - a[Y][0]) / 2;
-    v[Z][1] = v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2;
+    v[X][1] = (v[X][0] + a[X][0] + (a[X][1] - a[X][0]) / 2);
+    v[Y][1] = (v[Y][0] + a[Y][0] + (a[Y][1] - a[Y][0]) / 2);
+    v[Z][1] = (v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2);
 
     // Get position
-    p[X][1] = p[X][0] + v[X][0] + (v[X][1] - v[X][0]) / 2;
-    p[Y][1] = p[Y][0] + v[Y][0] + (v[Y][1] - v[Y][0]) / 2;
-    p[Z][1] = p[Z][0] + v[Z][0] + (v[Z][1] - v[Z][0]) / 2;
+    p[X][1] = (p[X][0] + v[X][0] + (v[X][1] - v[X][0]) / 2);
+    p[Y][1] = (p[Y][0] + v[Y][0] + (v[Y][1] - v[Y][0]) / 2);
+    p[Z][1] = (p[Z][0] + v[Z][0] + (v[Z][1] - v[Z][0]) / 2);
 
     // Store values
     for (int i = 0; i < 3; ++i) {
@@ -117,11 +95,11 @@ void Hover::Regulate(void) {
     }
 
     // Reset sampling
-    sampleCnt = 0;
+    //sampleCnt = 0;
     acc[X] = acc[Y] = acc[Z] = 0;
 
     /* Debug prints to serial */
-    if (timestampCurrent - timestampPrint > 3000000) {
+    if ((debug_print += 1024) == 0) {
       // print Z-position
       Serial.print("Z: ");
       Serial.print(p[Z][1]);
@@ -129,19 +107,18 @@ void Hover::Regulate(void) {
       Serial.print(v[Z][1]);
       Serial.print(", ");
       Serial.println(a[Z][1]);
-
-      timestampPrint = timestampCurrent;
     }
 
-    /* ===== PID  ===== */// check overall performance?
-    /* Errors */
+    /*
+    // ===== PID  ===== // check overall performance?
+    // Errors 
     e[axisX] = pRef[X] - p[X][1];
     e[axisY] = pRef[Y] - p[Y][1];
     e[axisZ] = pRef[Z] - p[Z][1];
     e[axisRo] = sensor->anglePitch < 0 ? 360 - sensor->anglePitch : sensor->anglePitch; // Positive means right side above left.
     e[axisPi] = sensor->anglePitch < 0 ? 360 - sensor->anglePitch : sensor->anglePitch; // Positive pitch means front is above back.
     e[axisYa] = 0.f; // direction 
-    /* Integrator part */
+    // Integrator part
     // I_k = I_(k-1) + (Ts / Ti) * e -> Ti = Ts / Ti
     I[axisX] = I[axisX] + Ti[axisX] * e[axisX];
     I[axisY] = I[axisY] + Ti[axisY] * e[axisY];
@@ -149,7 +126,7 @@ void Hover::Regulate(void) {
     I[axisRo] = I[axisRo] + Ti[axisRo] * e[axisRo];
     I[axisPi] = I[axisPi] + Ti[axisPi] * e[axisPi];
     I[axisYa] = I[axisYa] + Ti[axisYa] * e[axisYa];
-    /* output */
+    // output
     u[axisX] = K[axisX] * (e[axisX] + I[axisX] + Td[axisX] * (e[axisX] - eOld[axisX]));
     u[axisY] = K[axisY] * (e[axisY] + I[axisY] + Td[axisY] * (e[axisY] - eOld[axisY]));
     u[axisZ] = K[axisZ] * (e[axisZ] + I[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
@@ -157,7 +134,7 @@ void Hover::Regulate(void) {
     u[axisPi] = K[axisPi] * (e[axisPi] + I[axisPi] + Td[axisPi] * (e[axisPi] - eOld[axisPi]));
     u[axisYa] = K[axisYa] * (e[axisYa] + I[axisYa] + Td[axisYa] * (e[axisYa] - eOld[axisYa]));
 
-    /* ===== derictional mapping ===== */
+    // ===== derictional mapping =====
     // limit speed to maximum
     speed[LF] = min(speed[LF] + u[axisRo] - u[axisPi], debug_maxMotorEffect);
     speed[RF] = min(speed[RF] - u[axisRo] - u[axisPi], debug_maxMotorEffect);
@@ -169,17 +146,17 @@ void Hover::Regulate(void) {
     speed[LB] = speed[LB] < 10 ? 10 : speed[LB];
     speed[RB] = speed[RB] < 10 ? 10 : speed[RB];
 
-    /* set engine speed value from 0 to 100 */
+    // set engine speed value from 0 to 100
     if (false) {
       motors[LF].setSpeed(speed[LF]);
       motors[RF].setSpeed(speed[RF]);
       motors[LB].setSpeed(speed[LB]);
       motors[RB].setSpeed(speed[RB]);
     }
-
+    */
     /* store state */
-    for (int i = 0; i < 6; ++i)
-      eOld[i] = e[i];
-    timestamp = timestampCurrent;
-  }
+    //for (int i = 0; i < 6; ++i)
+    //  eOld[i] = e[i];
+    //timestamp = timestampCurrent;
+  //}
 }

@@ -29,18 +29,17 @@ private:
   sensordata *sensor;
 
   /* time and  */
-  unsigned long dt, timestamp, timestampCurrent, timestampMotor, timestampPrint;  
+  unsigned long dt, timestamp, timestampCurrent, timestampMotor;  
+  int debug_print;
 
   /* Calibration */
-  int calCnt;
-  int sstate[3];
-  int deadzone_min, deadzone_max;
+  long deadzone_min, deadzone_max, start_up;
 
   int sampleCnt, sampleSize;
   //float rawToSI;
-  int acc[3];
-  int a[3][2], v[3][2], p[3][2];
-  int pRef[3];
+  long acc[3], sstate[3];
+  long a[3][2], v[3][2], p[3][2];
+  long pRef[3];
 
   /* PID */
   int Ts;
