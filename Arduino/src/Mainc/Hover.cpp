@@ -11,16 +11,16 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   //timestampMotor = timestamp = micros();
 
   /* Debug */
-  debug_maxMotorEffect = 40;
+  debug_maxMotorEffect = 55;
   debug_minMotorEffect = 6;
-    
+  debug_print = 0;    
   // Sample interator
   sampleCnt = 0;
 
   // Deadzone threshold for sensors.
 //  deadzone_min = -64;
 //  deadzone_max = 64;
-  calCnt = -512;
+  calCnt = -1024;
 
   /* acceleration, velocity and position */
   for (int i = 0; i < 3; ++i)
@@ -41,14 +41,15 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   speed[RF] = motors[RF].getSpeed();
 */
   /* Internal speed variable */
-  speed[LF] = speed[RF] = speed[LB] = speed[RB] = debug_maxMotorEffect;
-  //debug_print = 0;
+  
+  speed[LF] = speed[RF] = speed[LB] = speed[RB] = 45;
+
   //Serial.println("Hoverregulator initialized");
 }
 
 /* Calibrates sensorvalues by sampling a number of times and then average on those values */
 bool Hover::Calibrate() {
-  if (calCnt > 512) return true;
+  if (calCnt > 256) return true;
   if (++calCnt > 0) {
     //sstate[X] += sensor->acc.x;
     //sstate[Y] += sensor->acc.y;
@@ -56,12 +57,12 @@ bool Hover::Calibrate() {
     sstate[axisRo] += sensor->angleRoll;
     sstate[axisPi] += sensor->anglePitch;
   }
-  if (calCnt == 512) {
+  if (calCnt == 256) {
     //sstate[X] /= 512;
     //sstate[Y] /= 512;
-    sstate[Z] /= 512;
-    sstate[axisRo] /= 512;
-    sstate[axisPi] /= 512;
+    sstate[Z] /= 256;
+    sstate[axisRo] /= 256;
+    sstate[axisPi] /= 256;
     dt = micros();
     //Serial.println("Calibrated");
     return calCnt++;
@@ -71,7 +72,7 @@ bool Hover::Calibrate() {
 
 void Hover::Regulate(void) {
   // Kill motors after 30 sec.
-  if(micros() - dt > 10000000) {
+  if(micros() - dt > 12000000) {
     motors[LF].setSpeed(0);
     motors[RF].setSpeed(0);
     motors[LB].setSpeed(0);
@@ -108,8 +109,8 @@ void Hover::Regulate(void) {
     */
     
     // Z
-    a[Z][1] = acc[Z] / 8;
-    v[Z][1] = (v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2);
+    a[Z][1] = acc[Z] / 16;
+    v[Z][1] = (v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2) / 1.15;
     p[Z][1] = (p[Z][0] + v[Z][0] + (v[Z][1] - v[Z][0]) / 2);
 
     // Store values
@@ -136,10 +137,17 @@ void Hover::Regulate(void) {
     */
     // Z
     int scale = 16;
-    e[axisZ] = (pRef[Z] - p[Z][1]) * scale;
-    u[axisZ] = K[axisZ] * (e[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
-    u[axisZ] = max(min(u[axisZ], debug_minMotorEffect), debug_maxMotorEffect);
-    //u[axisZ] = 5;
+    //e[axisZ] = (pRef[Z] - p[Z][1] / 8192) * scale;
+    //u[axisZ] = K[axisZ] * (e[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
+    //u[axisZ] = max(min(u[axisZ], debug_minMotorEffect), debug_maxMotorEffect);
+    
+    int liftForce;
+    if (micros() - dt < 5000000) {
+        speed[LF] = speed[RF] = speed[LB] = speed[RB] = 45;      
+    } else {
+        speed[LF] = speed[RF] = speed[LB] = speed[RB] = 32;      
+    }
+      
     int deadzone = 2;
     // Roll
     e[axisRo] = (sensor->angleRoll - sstate[axisRo])*scale;
@@ -153,18 +161,20 @@ void Hover::Regulate(void) {
     e[axisYa] = (sensor->angleYaw)*scale; // compare to desired direction.
     u[axisYa] = K[axisYa] * (e[axisYa] + Td[axisYa] * (e[axisYa] - eOld[axisYa]));
 
-    speed[LF] = max(min(speed[LF] + u[axisRo] - u[axisPi] + u[axisZ], debug_maxMotorEffect), debug_minMotorEffect);
-    speed[RF] = max(min(speed[RF] - u[axisRo] - u[axisPi] + u[axisZ], debug_maxMotorEffect), debug_minMotorEffect);
-    speed[LB] = max(min(speed[LB] + u[axisRo] + u[axisPi] + u[axisZ], debug_maxMotorEffect), debug_minMotorEffect);
-    speed[RB] = max(min(speed[RB] - u[axisRo] + u[axisPi] + u[axisZ], debug_maxMotorEffect), debug_minMotorEffect);
+    speed[LF] = max(min(speed[LF] + u[axisRo] - u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
+    speed[RF] = max(min(speed[RF] - u[axisRo] - u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
+    speed[LB] = max(min(speed[LB] + u[axisRo] + u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
+    speed[RB] = max(min(speed[RB] - u[axisRo] + u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
 
     /* Debug prints to serial */
-    
-    if (false && ++debug_print > 10) {
+    /*
+    if (++debug_print > 10) {
       debug_print = 0;
-      Serial.println(u[axisZ]);
-    }
-    /*  Serial.print(e[axisRo]);
+      //Serial.println(u[axisZ]);
+      Serial.println(e[Z]);
+      //Serial.println(v[Z][1]);
+      Serial.println();
+      Serial.print(e[axisRo]);
       Serial.print(", ");
       Serial.print(e[axisPi]);
       Serial.print(", ");
@@ -182,7 +192,7 @@ void Hover::Regulate(void) {
     }
 */
     // set engine speed value from 0 to 100
-    if (false) {
+    if (true) {
       motors[LF].setSpeed(speed[LF]);
       motors[RF].setSpeed(speed[RF]);
       motors[LB].setSpeed(speed[LB]);
