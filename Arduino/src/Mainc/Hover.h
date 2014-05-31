@@ -13,12 +13,28 @@
 #define axisPi 4
 #define axisYa 5
 
-#define CALIBRATION_CNT 256
-#define SAMPLE_CNT 256
+#define MOTOR_MAX 35;
+#define MOTOR_MIN 10;
+#define accDeadzone 32;      
+#define angDeadzone 3;
 
-#define MAX_RUNTIME 20      // Number of second the test should last
-#define SPEED_UP_LIM 10     // Number of +1 speed increase/second (speed decreases rest of time)
-#define START_SPEED 25      // Motor start speed
+#define COLD_START 1024       // Number of iteration before actual calibration
+#define CALIBRATION_CNT 256   // Number of sampled values during calibration
+#define SAMPLE_CNT 8          // Samples for average values
+
+#define VELOCITY_REDUCE 0.66f // Velocity must always reduced at every postion calc. 
+
+#define MAX_RUNTIME 20        // Number of second the test should last
+#define SPEED_UP_LIM 30       // Number of +1 speed increase/second (speed decreases rest of time)
+#define START_SPEED 20        // Motor start speed
+
+// Current config will let the quad accelerate from 20 to 30 and then down to 20.
+// Idea is to test the top value intil lift of :-)
+
+/*  START_SPEED set to something low.
+ *  START_SPEED + SPEED_UP_LIM is then the top speed set during runtime IF MAX_RUNTIME is lower then the sum.
+ *  START_SPEED + SPEED_UP_LIMIT - MAX_RUNTIME is the speed before the stop.
+ */
 
 class Hover {
 
