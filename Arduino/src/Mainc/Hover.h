@@ -33,9 +33,9 @@ private:
   int debug_print;
 
   /* Calibration */
-  long deadzone_min, deadzone_max, start_up;
+  int deadzone_min, deadzone_max, calCnt;
 
-  int sampleCnt, sampleSize;
+  int sampleCnt;
   //float rawToSI;
   long acc[3], sstate[3];
   long a[3][2], v[3][2], p[3][2];
