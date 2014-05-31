@@ -30,7 +30,7 @@ CellVoltage::CellVoltage(int pin): pin(pin){
 }
 
 //return voltage in percentage for the cell
-int CellVoltage::getVoltage(){
+float CellVoltage::getVoltage(){
   return 100*((analogRead(pin) * c) - CELL_VOLTAGE_MIN) / (CELL_VOLTAGE_MAX - CELL_VOLTAGE_MIN);
 }
 

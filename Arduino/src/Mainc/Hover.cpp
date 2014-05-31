@@ -9,7 +9,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   /* Hardware */
   this->motors = motors;
   this->sensor = sensor;
-  timestampMotor = timestamp = micros();
+  //timestampMotor = timestamp = micros();
 
   /* Debug */
   debug_maxMotorEffect = 100;
@@ -18,8 +18,8 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   sampleCnt = 0;
 
   // Deadzone threshold for sensors.
-  deadzone_min = -64;
-  deadzone_max = 64;
+//  deadzone_min = -64;
+//  deadzone_max = 64;
   calCnt = -1024;
 
   /* acceleration, velocity and position */
@@ -28,10 +28,8 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
 
   /* regulation variable, can later be optimized (codewise) */
   for (int i = 0; i < 6; ++i) {
-    Ti[i] = 1;
     Td[i] = 1;
     K[i] = 1;
-    I[i] = 1;
     e[i] = eOld[i] = u[i] = 0;
   }
 
@@ -54,18 +52,16 @@ bool Hover::Calibrate() {
     sstate[X] += sensor->acc.x;
     sstate[Y] += sensor->acc.y;
     sstate[Z] += sensor->acc.z;
+    sstate[axisRo] += sensor->angleRoll;
+    sstate[axisPi] += sensor->anglePitch;
   }
   if (calCnt == 512) {
     sstate[X] /= 512;
     sstate[Y] /= 512;
     sstate[Z] /= 512;
-    Serial.print("Offset: ");
-    Serial.print(sstate[X]);
-    Serial.print(", ");
-    Serial.print(sstate[Y]);
-    Serial.print(", ");
-    Serial.println(sstate[Z]);
-    
+    sstate[axisRo] /= 512;
+    sstate[axisPi] /= 512;
+    Serial.println("Calibrated");
     return calCnt++;
   }
   return false;
@@ -79,14 +75,14 @@ void Hover::Regulate(void) {
 
   /* Sample values using filtration of low values. */
   int x = sensor->acc.x + sstate[X];
-  int y = sensor->acc.y + sstate[Y];
-  int z = sensor->acc.z + sstate[Z];
+  //int y = sensor->acc.y + sstate[Y];
+  //int z = sensor->acc.z + sstate[Z];
   
   int zone = 32;
   
   acc[X] += x > zone || x < -zone ? x : 0;
-  acc[Y] += y > zone || y < -zone ? y : 0;
-  acc[Z] += z > zone || z < -zone ? z : 0;
+  //acc[Y] += y > zone || y < -zone ? y : 0;
+  //acc[Z] += z > zone || z < -zone ? z : 0;
   
   if (++sampleCnt % 8 == 0) {
     /*
@@ -130,24 +126,17 @@ void Hover::Regulate(void) {
     */
     // Z
     e[axisZ] = pRef[Z] - p[Z][1];
-    I[axisZ] = I[axisZ] + Ti[axisZ] * e[axisZ];
-    u[axisZ] = K[axisZ] * (e[axisZ] + I[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
+    u[axisZ] = K[axisZ] * (e[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
     // Roll
-    e[axisRo] = sensor->angleRoll;
-    I[axisRo] = I[axisRo] + Ti[axisRo] * e[axisRo];
-    u[axisRo] = K[axisRo] * (e[axisRo] + I[axisRo] + Td[axisRo] * (e[axisRo] - eOld[axisRo]));
+    e[axisRo] = sensor->angleRoll - sstate[axisRo];
+    u[axisRo] = K[axisRo] * (e[axisRo] + Td[axisRo] * (e[axisRo] - eOld[axisRo]));
     // Pitch
-    e[axisPi] = sensor->anglePitch;
-    I[axisPi] = I[axisPi] + Ti[axisPi] * e[axisPi];
-    u[axisPi] = K[axisPi] * (e[axisPi] + I[axisPi] + Td[axisPi] * (e[axisPi] - eOld[axisPi]));
-
+    e[axisPi] = sensor->anglePitch - sstate[axisPi];
+    u[axisPi] = K[axisPi] * (e[axisPi] + Td[axisPi] * (e[axisPi] - eOld[axisPi]));
     // Yaw
     e[axisYa] = sensor->angleYaw; // compare to desired direction.
-    I[axisYa] = I[axisYa] + Ti[axisYa] * e[axisYa];
-    u[axisYa] = K[axisYa] * (e[axisYa] + I[axisYa] + Td[axisYa] * (e[axisYa] - eOld[axisYa]));
+    u[axisYa] = K[axisYa] * (e[axisYa] + Td[axisYa] * (e[axisYa] - eOld[axisYa]));
 
-    // ===== derictional mapping =====
-    // limit speed to range 10 to debug_maxMotorEffect
     speed[LF] = max(min(speed[LF] + u[axisRo] - u[axisPi], debug_maxMotorEffect), 10);
     speed[RF] = max(min(speed[RF] - u[axisRo] - u[axisPi], debug_maxMotorEffect), 10);
     speed[LB] = max(min(speed[LB] + u[axisRo] + u[axisPi], debug_maxMotorEffect), 10);
@@ -165,14 +154,10 @@ void Hover::Regulate(void) {
       Serial.println(e[axisYa]);
       Serial.println();
       
-      Serial.print("Front: ");
-      Serial.print(speed[LF]);
+      Serial.print("U: ");
+      Serial.print(u[axisRo]);
       Serial.print(", ");
-      Serial.println(speed[RF]);
-      Serial.print("Back : ");
-      Serial.print(speed[LB]);
-      Serial.print(", ");
-      Serial.println(speed[RB]);
+      Serial.println(u[axisPi]);
     }
 
     // set engine speed value from 0 to 100

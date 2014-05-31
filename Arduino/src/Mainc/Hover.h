@@ -29,21 +29,21 @@ private:
   sensordata *sensor;
 
   /* time and  */
-  unsigned long dt, timestamp, timestampCurrent, timestampMotor;  
+  //unsigned long dt, timestamp, timestampCurrent, timestampMotor;  
   int debug_print;
 
   /* Calibration */
-  int deadzone_min, deadzone_max, calCnt;
-
+//  int deadzone_min, deadzone_max, calCnt;
+  int calCnt;
   int sampleCnt;
   //float rawToSI;
-  long acc[3], sstate[3];
+  long acc[3], sstate[6];
   long a[3][2], v[3][2], p[3][2];
   long pRef[3];
 
   /* PID */
   int Ts;
-  int Ti[6], Td[6], K[6], I[6], e[6], eOld[6], u[6];
+  int Td[6], K[6], e[6], eOld[6], u[6];
 
   /* Internal speed when debugging without real engines */
   int speed[4];
