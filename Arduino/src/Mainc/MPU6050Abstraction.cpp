@@ -74,15 +74,7 @@ bool MPUAbstraction::readYawPitchRoll(float ypr[3], VectorInt16 &acc){
     //invert yaw and pitch to correspond to the real world
     //roll is right from begining.
     ypr[0] = -ypr[0];
-    ypr[1] = -ypr[1];
-    
-    //dont allow negative angles
-    if (ypr[0] < 0)
-      ypr[0] = 2*M_PI + ypr[0];
-    if (ypr[1] < 0)
-      ypr[1] = 2*M_PI + ypr[1];
-    if (ypr[2] < 0)
-      ypr[2] = 2*M_PI + ypr[2];    
+    ypr[1] = -ypr[1];  
     return true;
   }
   return false;

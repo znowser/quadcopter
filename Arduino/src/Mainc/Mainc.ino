@@ -6,7 +6,7 @@
 #include "MS561101BA.h"
 #include "SensorDataStruct.h"
 #include "Hover.h"
-#include "SerialBuss.h"
+//#include "SerialBuss.h"
 #include "BussProtocol.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
@@ -27,7 +27,8 @@ float getAltitude(float press, float temp);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf() {
-  SerialBuss serial;
+  Serial.begin(115200);
+  //SerialBuss serial;
   Motor motor[4];
   CellVoltage battery[3];
   sensordata sensorData;
@@ -54,13 +55,15 @@ int mainf() {
   battery[CELL3].init(A2);
   /*==================================*/
 
-  serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
+  //serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
   /*==========Hover regulator=============*/
   Hover regulator(motor, &sensorData, 0.5);
   //Main regulator/sensor loop
   int len = 0;
-  char tmp[200];
+  char tmp[150];
   while (true) {
+    Serial.write(buildSensorPackage(sensorData, tmp, len), len);
+    Serial.println();
     //TODO continue to implement the new buss protocol
   //  serial.recvRasp();
 
