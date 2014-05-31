@@ -5,203 +5,146 @@ Hover::Hover(Motor *motors, sensordata *sensor, float refAltitude) {
 }
 
 void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
-  /* Hardware */
+  // Hardware
   this->motors = motors;
-  this->sensor = sensor;
-  //timestampMotor = timestamp = micros();
-
-  /* Debug */
-  debug_maxMotorEffect = 55;
-  debug_minMotorEffect = 6;
-  debug_print = 0;    
+  this->sensor = sensor;   
   // Sample interator
-  sampleCnt = 0;
-
-  // Deadzone threshold for sensors.
-//  deadzone_min = -64;
-//  deadzone_max = 64;
+  sampleCnt = speedUpCnt = 0;
   calCnt = -1024;
-
-  /* acceleration, velocity and position */
+  // acceleration, velocity, position and offset!
   for (int i = 0; i < 3; ++i)
-    acc[i] = a[i][0] = a[i][1] = v[i][0] = v[i][1] = p[i][0] = p[i][1] = pRef[i] = sstate[X] = sstate[Y] = sstate[Z] = 0;
-
-  /* regulation variable, can later be optimized (codewise) */
+    smp[i] = a[i][0] = a[i][1] = v[i][0] = v[i][1] = p[i][0] = p[i][1] = pRef[i] = sstate[X] = sstate[Y] = sstate[Z] = 0;
+  // PD vars
   for (int i = 0; i < 6; ++i) {
     Td[i] = 10.f;
     K[i] = 0.01f;
     e[i] = eOld[i] = u[i] = 0;
   }
-
-  /* Initial motor speed, range 0 - 100 */
-  /*
-  speed[LF] = motors[LF].getSpeed();
-  speed[RF] = motors[RF].getSpeed();
-  speed[LB] = motors[LB].getSpeed();
-  speed[RF] = motors[RF].getSpeed();
-*/
-  /* Internal speed variable */
-  
-  speed[LF] = speed[RF] = speed[LB] = speed[RB] = 45;
-
-  //Serial.println("Hoverregulator initialized");
+  // INITIAL MOTOR SPEED, KEEP BELOW 30! 
+  speed[LF] = speed[RF] = speed[LB] = speed[RB] = START_SPEED;
 }
 
 /* Calibrates sensorvalues by sampling a number of times and then average on those values */
 bool Hover::Calibrate() {
-  if (calCnt > 256) return true;
+  if (calCnt > CALIBRATION_CNT) return true;
   if (++calCnt > 0) {
-    //sstate[X] += sensor->acc.x;
-    //sstate[Y] += sensor->acc.y;
+    sstate[X] += sensor->acc.x;
+    sstate[Y] += sensor->acc.y;
     sstate[Z] += sensor->acc.z;
     sstate[axisRo] += sensor->angleRoll;
     sstate[axisPi] += sensor->anglePitch;
+    sstate[axisYa] += sensor->angleYaw;
   }
-  if (calCnt == 256) {
-    //sstate[X] /= 512;
-    //sstate[Y] /= 512;
-    sstate[Z] /= 256;
-    sstate[axisRo] /= 256;
-    sstate[axisPi] /= 256;
-    dt = micros();
-    //Serial.println("Calibrated");
+  if (calCnt == CALIBRATION_CNT) {
+    sstate[X] /= CALIBRATION_CNT;
+    sstate[Y] /= CALIBRATION_CNT;
+    sstate[Z] /= CALIBRATION_CNT;
+    sstate[axisRo] /= CALIBRATION_CNT;
+    sstate[axisPi] /= CALIBRATION_CNT;
+    sstate[axisYa] /= CALIBRATION_CNT;
+    startTime = micros();
     return calCnt++;
   }
   return false;
 }
 
 void Hover::Regulate(void) {
-  // Kill motors after 30 sec.
-  if(micros() - dt > 12000000) {
+  // Safety, kill motors
+  if (speedUpCnt > MAX_RUNTIME || micros() - startTime > MAX_RUNTIME * SEC) {
     motors[LF].setSpeed(0);
     motors[RF].setSpeed(0);
     motors[LB].setSpeed(0);
     motors[RB].setSpeed(0);
-    return;    
+    return;
   }
-  //timestampCurrent = micros();
-
-  /* This must be checked! Very important that dt is the same every time! */
-  //dt = timestampCurrent - timestamp;
-
-  /* Sample values using filtration of low values. */
-  //int x = sensor->acc.x - sstate[X];
-  //int y = sensor->acc.y - sstate[Y];
-  int z = sensor->acc.z - sstate[Z];
-  
-  int zone = 16;
-  
-  //acc[X] += x > zone || x < -zone ? x : 0;
-  //acc[Y] += y > zone || y < -zone ? y : 0;
-  acc[Z] += z > zone || z < -zone ? z : 0;
-  
-  if (++sampleCnt % 8 == 0) {
-    /*
+  // Debug
+  int debug_maxMotorEffect = 35;
+  int debug_minMotorEffect = 10;
+  int debug_print = 0;
+  // Deadzones
+  int accDeadzone = 16;      
+  int angDeadzone = 2;
+  // Sample values using filtration of low values.
+  int x = sensor->acc.x - sstate[axisX];
+  int y = sensor->acc.y - sstate[axisY];
+  int z = sensor->acc.z - sstate[axisZ]; 
+  int aR = sensor->angleRoll - sstate[axisRo]; 
+  int aP = sensor->anglePitch - sstate[axisPi]; 
+  int aY = sensor->angleYaw - sstate[axisYa];  
+  smp[axisX] += x > accDeadzone || x < -accDeadzone ? x : 0;
+  smp[axisY] += y > accDeadzone || y < -accDeadzone ? y : 0;
+  smp[axisZ] += z > accDeadzone || z < -accDeadzone ? z : 0;
+  smp[axisRo] += aR > angDeadzone || aR < -angDeadzone : aR : 0;
+  smp[axisRo] += aP > angDeadzone || aP < -angDeadzone : aP : 0;
+  smp[axisRo] += aY > angDeadzone || aY < -angDeadzone : aY : 0;
+  // Speed up sequence
+  if (micros() - speedUpTime > SEC) {
+    ++speedUpCnt;
+    if (++speedUpCnt < SPEED_UP_LIM) {
+      ++speed[LF];
+      ++speed[RF];
+      ++speed[LB];
+      ++speed[RB];
+    } else {
+      --speed[LF];
+      --speed[RF];
+      --speed[LB];
+      --speed[RB];
+    }
+    speedUpTime = micros() - speedUpTime;
+  }
+  // Do stuff on sensor data.
+  if (++sampleCnt % SAMPLE_CNT == 0) {
     // X
-    a[X][1] = acc[X] / 8;
+    a[X][1] = smp[X] / SAMPLE_CNT;
     v[X][1] = (v[X][0] + a[X][0] + (a[X][1] - a[X][0]) / 2);
     p[X][1] = (p[X][0] + v[X][0] + (v[X][1] - v[X][0]) / 2);
-    
     // Y
-    a[Y][1] = acc[Y] / 8;
+    a[Y][1] = smp[Y] / SAMPLE_CNT;
     v[Y][1] = (v[Y][0] + a[Y][0] + (a[Y][1] - a[Y][0]) / 2);
     p[Y][1] = (p[Y][0] + v[Y][0] + (v[Y][1] - v[Y][0]) / 2);
-    */
-    
     // Z
-    a[Z][1] = acc[Z] / 16;
-    v[Z][1] = (v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2) / 1.15;
+    a[Z][1] = smp[Z] / SAMPLE_CNT;
+    v[Z][1] = (v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2);
     p[Z][1] = (p[Z][0] + v[Z][0] + (v[Z][1] - v[Z][0]) / 2);
-
     // Store values
     for (int i = 0; i < 3; ++i) {
       a[i][0] = a[i][1];
       v[i][0] = v[i][1];
       p[i][0] = p[i][1];
     }
-
-    // Reset sampling
-    sampleCnt = 0;
-    acc[X] = acc[Y] = acc[Z] = 0; 
-    
-    // ===== PD  ===== // check overall performance?
-    /*
-    // X 
+    // axis X
     e[axisX] = pRef[X] - p[X][1];
-    I[axisX] = I[axisX] + Ti[axisX] * e[axisX];
-    u[axisX] = K[axisX] * (e[axisX] + I[axisX] + Td[axisX] * (e[axisX] - eOld[axisX]));
-    // Y
+    u[axisX] = K[axisX] * (e[axisX] + Td[axisX] * (e[axisX] - eOld[axisX]));
+    // axis Y
     e[axisY] = pRef[Y] - p[Y][1];
-    I[axisY] = I[axisY] + Ti[axisY] * e[axisY];
-    u[axisY] = K[axisY] * (e[axisY] + I[axisY] + Td[axisY] * (e[axisY] - eOld[axisY]));
-    */
-    // Z
-    int scale = 16;
-    //e[axisZ] = (pRef[Z] - p[Z][1] / 8192) * scale;
-    //u[axisZ] = K[axisZ] * (e[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
-    //u[axisZ] = max(min(u[axisZ], debug_minMotorEffect), debug_maxMotorEffect);
-    
-    int liftForce;
-    if (micros() - dt < 5000000) {
-        speed[LF] = speed[RF] = speed[LB] = speed[RB] = 45;      
-    } else {
-        speed[LF] = speed[RF] = speed[LB] = speed[RB] = 32;      
-    }
-      
-    int deadzone = 2;
-    // Roll
-    e[axisRo] = (sensor->angleRoll - sstate[axisRo])*scale;
-    e[axisRo] = e[axisRo] > deadzone || e[axisRo] < -deadzone ? e[axisRo] : 0;
+    u[axisY] = K[axisY] * (e[axisY] + Td[axisY] * (e[axisY] - eOld[axisY]));
+    // axis Z
+    e[axisZ] = pRef[Z] - p[Z][1];
+    u[axisZ] = K[axisZ] * (e[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
+    // axis Roll
+    e[axisRo] = smp[axisRo] / SAMPLE_CNT;
     u[axisRo] = K[axisRo] * (e[axisRo] + Td[axisRo] * (e[axisRo] - eOld[axisRo]));
-    // Pitch
-    e[axisPi] = (sensor->anglePitch - sstate[axisPi])*scale;
-    e[axisPi] = e[axisPi] > deadzone || e[axisPi] < -deadzone ? e[axisPi] : 0;
+    // axis Pitch
+    e[axisPi] = smp[axisPi] / SAMPLE_CNT;
     u[axisPi] = K[axisPi] * (e[axisPi] + Td[axisPi] * (e[axisPi] - eOld[axisPi]));
-    // Yaw
-    e[axisYa] = (sensor->angleYaw)*scale; // compare to desired direction.
-    u[axisYa] = K[axisYa] * (e[axisYa] + Td[axisYa] * (e[axisYa] - eOld[axisYa]));
-
+    // axis Yaw
+    e[axisYa] = smp[axisYa] / SAMPLE_CNT;
+    u[axisYa] = K[axisYa] * (e[axisYa] + Td[axisYa] * (e[axisYa] - eOld[axisYa]));    
+    // LIMIT ENGINE MIN MAX SPEED
     speed[LF] = max(min(speed[LF] + u[axisRo] - u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
     speed[RF] = max(min(speed[RF] - u[axisRo] - u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
     speed[LB] = max(min(speed[LB] + u[axisRo] + u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
     speed[RB] = max(min(speed[RB] - u[axisRo] + u[axisPi], debug_maxMotorEffect), debug_minMotorEffect);
-
-    /* Debug prints to serial */
-    /*
-    if (++debug_print > 10) {
-      debug_print = 0;
-      //Serial.println(u[axisZ]);
-      Serial.println(e[Z]);
-      //Serial.println(v[Z][1]);
-      Serial.println();
-      Serial.print(e[axisRo]);
-      Serial.print(", ");
-      Serial.print(e[axisPi]);
-      Serial.print(", ");
-      Serial.println(e[axisYa]);
-      Serial.println();
-      
-      Serial.print("Speed: ");
-      Serial.print(speed[LF]);
-      Serial.print(", ");
-      Serial.print(speed[RF]);
-      Serial.print(", ");
-      Serial.print(speed[LB]);
-      Serial.print(", ");
-      Serial.print(speed[RB]);
-    }
-*/
-    // set engine speed value from 0 to 100
-    if (true) {
-      motors[LF].setSpeed(speed[LF]);
-      motors[RF].setSpeed(speed[RF]);
-      motors[LB].setSpeed(speed[LB]);
-      motors[RB].setSpeed(speed[RB]);
-    }
-    
-    /* store state */
+    // SET ENGINE SPEED LIMIT TO MIN AND MAX
+    motors[LF].setSpeed(speed[LF]);
+    motors[RF].setSpeed(speed[RF]);
+    motors[LB].setSpeed(speed[LB]);
+    motors[RB].setSpeed(speed[RB]);
+    // Reset samples
+    smp[axisX] = smp[axisY] = smp[axisZ] = 0; 
+    // Store state
     for (int i = 0; i < 6; ++i)
       eOld[i] = e[i];
-    //timestamp = timestampCurrent;
   }
 }

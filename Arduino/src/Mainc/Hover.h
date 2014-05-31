@@ -4,12 +4,8 @@
 #include "Motor.h"
 #include "SensorDataStruct.h"
 
-#define ROLL 0
-#define PITCH 1
-#define YAW 2
-#define X 0
-#define Y 1
-#define Z 2
+#define SEC 1000000
+
 #define axisX 0
 #define axisY 1
 #define axisZ 2
@@ -17,36 +13,29 @@
 #define axisPi 4
 #define axisYa 5
 
+#define CALIBRATION_CNT 256
+#define SAMPLE_CNT 256
+
+#define MAX_RUNTIME 20      // Number of second the test should last
+#define SPEED_UP_LIM 10     // Number of +1 speed increase/second (speed decreases rest of time)
+#define START_SPEED 25      // Motor start speed
+
 class Hover {
 
 private:
-
-  /* Debug */
-  int debug_maxMotorEffect, debug_minMotorEffect;
-
   /* Hardware */
   Motor *motors;
   sensordata *sensor;
-
-  /* time and  */
-  unsigned long dt;//, timestamp, timestampCurrent, timestampMotor;  
-  int debug_print;
-
+  /* Time */
+  unsigned long startTime, speedUpTime;
+  int speedUpCnt;
   /* Calibration */
-//  int deadzone_min, deadzone_max, calCnt;
-  int calCnt;
-  int sampleCnt;
-  //float rawToSI;
-  long acc[3], sstate[6];
-  long a[3][2], v[3][2], p[3][2];
-  long pRef[3];
-
-  /* PID */
-  int Ts;
+  int calCnt, sampleCnt;  
+  long smp[6], sstate[6], a[3][2], v[3][2], p[3][2], pRef[3];
+  /* PD */
   int e[6], eOld[6], u[6];
   float K[6], Td[6];
-
-  /* Internal speed when debugging without real engines */
+  /* MOTOR EFFECT */
   int speed[4];
 
 public:
