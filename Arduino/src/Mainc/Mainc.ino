@@ -62,8 +62,8 @@ int mainf() {
   int len = 0;
   char tmp[150];
   while (true) {
-    //Serial.write(buildSensorPackage(sensorData, tmp, len), len);
-    //Serial.println();
+    Serial.write(buildSensorPackage(sensorData, tmp, len), len);
+    Serial.println();
     //TODO continue to implement the new buss protocol
   //  serial.recvRasp();
 

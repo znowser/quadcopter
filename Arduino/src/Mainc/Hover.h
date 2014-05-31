@@ -22,14 +22,14 @@ class Hover {
 private:
 
   /* Debug */
-  int debug_maxMotorEffect;
+  int debug_maxMotorEffect, debug_minMotorEffect;
 
   /* Hardware */
   Motor *motors;
   sensordata *sensor;
 
   /* time and  */
-  //unsigned long dt, timestamp, timestampCurrent, timestampMotor;  
+  unsigned long dt;//, timestamp, timestampCurrent, timestampMotor;  
   int debug_print;
 
   /* Calibration */
@@ -43,7 +43,8 @@ private:
 
   /* PID */
   int Ts;
-  int Td[6], K[6], e[6], eOld[6], u[6];
+  int e[6], eOld[6], u[6];
+  float K[6], Td[6];
 
   /* Internal speed when debugging without real engines */
   int speed[4];
