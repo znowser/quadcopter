@@ -12,8 +12,10 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   sampleCnt = speedUpCnt = 0;
   calCnt = -1024;
   // acceleration, velocity, position and offset!
-  for (int i = 0; i < 3; ++i)
-    smp[i] = a[i][0] = a[i][1] = v[i][0] = v[i][1] = p[i][0] = p[i][1] = pRef[i] = sstate[X] = sstate[Y] = sstate[Z] = 0;
+  for (int i = 0; i < 3; ++i) {
+    smp[i] = sstate[axisRo] = sstate[axisPi] = sstate[axisYa] = 0;
+    //a[i][0] = a[i][1] = v[i][0] = v[i][1] = p[i][0] = p[i][1] = pRef[i] = sstate[axisX] = sstate[axisY] = sstate[axisZ] = 0;
+  }
   // PD vars
   for (int i = 0; i < 6; ++i) {
     Td[i] = 10.f;
@@ -28,17 +30,21 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
 bool Hover::Calibrate() {
   if (calCnt > CALIBRATION_CNT) return true;
   if (++calCnt > 0) {
-    sstate[X] += sensor->acc.x;
-    sstate[Y] += sensor->acc.y;
-    sstate[Z] += sensor->acc.z;
+    /*
+    sstate[axisX] += sensor->acc.x;
+    sstate[axisY] += sensor->acc.y;
+    sstate[axisZ] += sensor->acc.z;
+    */
     sstate[axisRo] += sensor->angleRoll;
     sstate[axisPi] += sensor->anglePitch;
     sstate[axisYa] += sensor->angleYaw;
   }
   if (calCnt == CALIBRATION_CNT) {
-    sstate[X] /= CALIBRATION_CNT;
-    sstate[Y] /= CALIBRATION_CNT;
-    sstate[Z] /= CALIBRATION_CNT;
+    /*
+    sstate[axisX] /= CALIBRATION_CNT;
+    sstate[axisY] /= CALIBRATION_CNT;
+    sstate[axisZ] /= CALIBRATION_CNT;
+    */
     sstate[axisRo] /= CALIBRATION_CNT;
     sstate[axisPi] /= CALIBRATION_CNT;
     sstate[axisYa] /= CALIBRATION_CNT;
@@ -65,18 +71,22 @@ void Hover::Regulate(void) {
   int accDeadzone = 16;      
   int angDeadzone = 2;
   // Sample values using filtration of low values.
+  /*
   int x = sensor->acc.x - sstate[axisX];
   int y = sensor->acc.y - sstate[axisY];
   int z = sensor->acc.z - sstate[axisZ]; 
+  */
   int aR = sensor->angleRoll - sstate[axisRo]; 
   int aP = sensor->anglePitch - sstate[axisPi]; 
   int aY = sensor->angleYaw - sstate[axisYa];  
+  /*
   smp[axisX] += x > accDeadzone || x < -accDeadzone ? x : 0;
   smp[axisY] += y > accDeadzone || y < -accDeadzone ? y : 0;
   smp[axisZ] += z > accDeadzone || z < -accDeadzone ? z : 0;
-  smp[axisRo] += aR > angDeadzone || aR < -angDeadzone : aR : 0;
-  smp[axisRo] += aP > angDeadzone || aP < -angDeadzone : aP : 0;
-  smp[axisRo] += aY > angDeadzone || aY < -angDeadzone : aY : 0;
+  */
+  smp[axisRo] += aR > angDeadzone || aR < -angDeadzone ? aR : 0;
+  smp[axisRo] += aP > angDeadzone || aP < -angDeadzone ? aP : 0;
+  smp[axisRo] += aY > angDeadzone || aY < -angDeadzone ? aY : 0;
   // Speed up sequence
   if (micros() - speedUpTime > SEC) {
     ++speedUpCnt;
@@ -95,18 +105,19 @@ void Hover::Regulate(void) {
   }
   // Do stuff on sensor data.
   if (++sampleCnt % SAMPLE_CNT == 0) {
+    /*
     // X
-    a[X][1] = smp[X] / SAMPLE_CNT;
-    v[X][1] = (v[X][0] + a[X][0] + (a[X][1] - a[X][0]) / 2);
-    p[X][1] = (p[X][0] + v[X][0] + (v[X][1] - v[X][0]) / 2);
+    a[axisX][1] = smp[axisX] / SAMPLE_CNT;
+    v[axisX][1] = (v[axisX][0] + a[axisX][0] + (a[axisX][1] - a[axisX][0]) / 2);
+    p[axisX][1] = (p[axisX][0] + v[axisX][0] + (v[axisX][1] - v[axisX][0]) / 2);
     // Y
-    a[Y][1] = smp[Y] / SAMPLE_CNT;
-    v[Y][1] = (v[Y][0] + a[Y][0] + (a[Y][1] - a[Y][0]) / 2);
-    p[Y][1] = (p[Y][0] + v[Y][0] + (v[Y][1] - v[Y][0]) / 2);
+    a[axisY][1] = smp[axisY] / SAMPLE_CNT;
+    v[axisY][1] = (v[axisY][0] + a[axisY][0] + (a[axisY][1] - a[axisY][0]) / 2);
+    p[axisY][1] = (p[axisY][0] + v[axisY][0] + (v[axisY][1] - v[axisY][0]) / 2);
     // Z
-    a[Z][1] = smp[Z] / SAMPLE_CNT;
-    v[Z][1] = (v[Z][0] + a[Z][0] + (a[Z][1] - a[Z][0]) / 2);
-    p[Z][1] = (p[Z][0] + v[Z][0] + (v[Z][1] - v[Z][0]) / 2);
+    a[axisZ][1] = smp[axisZ] / SAMPLE_CNT;
+    v[axisZ][1] = (v[axisZ][0] + a[axisZ][0] + (a[axisZ][1] - a[axisZ][0]) / 2);
+    p[axisZ][1] = (p[axisZ][0] + v[axisZ][0] + (v[axisZ][1] - v[axisZ][0]) / 2);
     // Store values
     for (int i = 0; i < 3; ++i) {
       a[i][0] = a[i][1];
@@ -114,14 +125,15 @@ void Hover::Regulate(void) {
       p[i][0] = p[i][1];
     }
     // axis X
-    e[axisX] = pRef[X] - p[X][1];
+    e[axisX] = pRef[axisX] - p[axisX][1];
     u[axisX] = K[axisX] * (e[axisX] + Td[axisX] * (e[axisX] - eOld[axisX]));
     // axis Y
-    e[axisY] = pRef[Y] - p[Y][1];
+    e[axisY] = pRef[axisY] - p[axisY][1];
     u[axisY] = K[axisY] * (e[axisY] + Td[axisY] * (e[axisY] - eOld[axisY]));
     // axis Z
-    e[axisZ] = pRef[Z] - p[Z][1];
+    e[axisZ] = pRef[axisZ] - p[axisZ][1];
     u[axisZ] = K[axisZ] * (e[axisZ] + Td[axisZ] * (e[axisZ] - eOld[axisZ]));
+    */
     // axis Roll
     e[axisRo] = smp[axisRo] / SAMPLE_CNT;
     u[axisRo] = K[axisRo] * (e[axisRo] + Td[axisRo] * (e[axisRo] - eOld[axisRo]));
@@ -142,7 +154,8 @@ void Hover::Regulate(void) {
     motors[LB].setSpeed(speed[LB]);
     motors[RB].setSpeed(speed[RB]);
     // Reset samples
-    smp[axisX] = smp[axisY] = smp[axisZ] = 0; 
+    //smp[axisX] = smp[axisY] = smp[axisZ] = 0; 
+    smp[axisRo] = smp[axisPi] = smp[axisYa] = 0; 
     // Store state
     for (int i = 0; i < 6; ++i)
       eOld[i] = e[i];
