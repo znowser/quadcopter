@@ -95,10 +95,10 @@ void Hover::Regulate(void) {
       ++speed[LB];
       ++speed[RB];
     } else {
-      --speed[LF];
-      --speed[RF];
-      --speed[LB];
-      --speed[RB];
+      speed[LF] -= 2;
+      speed[RF] -= 2;
+      speed[LB] -= 2;
+      speed[RB] -= 2;
     }
     speedUpTime = micros();
   }
