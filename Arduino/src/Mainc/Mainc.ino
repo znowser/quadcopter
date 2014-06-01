@@ -70,13 +70,16 @@ int mainf() {
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
-      if (++sendCnt % 10 == 0) {
+      Serial.print("sensor freq: ");
+      Serial.println(++sendCnt / (micros()/ 1000000.f));
+      /*if (++sendCnt % 10 == 0) {
         Serial.write(buildSensorPackage(sensorData, tmp, len), len);
         Serial.println();
-      }
+      }*/
       //send the sensorstruct to the raspberry or regulate
-      if (regulator_activated && regulator.Calibrate())
+      /*if (regulator_activated && regulator.Calibrate())
         regulator.Regulate();
+        */
    //   else
    //     serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
     }

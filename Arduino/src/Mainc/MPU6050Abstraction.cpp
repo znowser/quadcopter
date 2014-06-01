@@ -10,6 +10,11 @@ MPUAbstraction::MPUAbstraction(){
 
 void MPUAbstraction::init(){ 
   Wire.begin();
+  // set 400kHz mode @ 16MHz CPU or 200kHz mode @ 8MHz CPU
+  // quadruple i2c buss speed to aviod FIFO-overflow from the sensorcard.
+  //source : http://www.i2cdevlib.com/forums/topic/27-fifo-overflow/ 
+  TWBR = 12;
+  
   // initialize device
   //Serial.println("Initializing I2C devices...");
   devStatus = mpu.dmpInitialize();
