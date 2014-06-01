@@ -7,6 +7,7 @@
 //Format the package by martins format
 char* buildSensorPackage(const sensordata &data, char* res, int &len) {
   len = 0;
+  
   len += sprintf(&res[len], "c1:%d!", (int)data.cellVoltage[CELL1]);
   len += sprintf(&res[len], "c2:%d!", (int)data.cellVoltage[CELL2]);
   len += sprintf(&res[len], "c3:%d!", (int)data.cellVoltage[CELL3]);
@@ -18,7 +19,7 @@ char* buildSensorPackage(const sensordata &data, char* res, int &len) {
 
   len += sprintf(&res[len], "temp:%d!", (int)data.temperature);
   len += sprintf(&res[len], "height:%d!", (int)data.height);
-  
+
   len += sprintf(&res[len], "yaw:%d!", data.angleYaw);
   len += sprintf(&res[len], "pitch:%d!", data.anglePitch);
   len += sprintf(&res[len], "roll:%d!", data.angleRoll);

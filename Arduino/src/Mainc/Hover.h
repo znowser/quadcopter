@@ -13,10 +13,10 @@
 #define axisPi 4
 #define axisYa 5
 
-#define MOTOR_MAX 35;
-#define MOTOR_MIN 10;
-#define accDeadzone 32;      
-#define angDeadzone 3;
+#define MOTOR_MAX 35
+#define MOTOR_MIN 10
+#define accDeadzone 32      
+#define angDeadzone 4
 
 #define COLD_START 1024       // Number of iteration before actual calibration
 #define CALIBRATION_CNT 256   // Number of sampled values during calibration
@@ -25,8 +25,8 @@
 #define VELOCITY_REDUCE 0.66f // Velocity must always reduced at every postion calc. 
 
 #define MAX_RUNTIME 20        // Number of second the test should last
-#define SPEED_UP_LIM 30       // Number of +1 speed increase/second (speed decreases rest of time)
-#define START_SPEED 20        // Motor start speed
+#define SPEED_UP_LIM 25       // Number of +1 speed increase/second (speed decreases rest of time)
+#define START_SPEED 15        // Motor start speed
 
 // Current config will let the quad accelerate from 20 to 30 and then down to 20.
 // Idea is to test the top value intil lift of :-)

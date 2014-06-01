@@ -19,7 +19,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   // PD vars
   for (int i = 0; i < 6; ++i) {
     Td[i] = 0.33f;               // Best guess, keep lower then 1
-    K[i] = 0.66f;                 // Best guess, regulate level of both P and D
+    K[i] = 0.33f;                 // Best guess, regulate level of both P and D
     e[i] = eOld[i] = u[i] = 0;
   }
   // Initial motor speed, then first when Regulate() is called.
@@ -49,6 +49,7 @@ bool Hover::Calibrate() {
     sstate[axisRo] /= CALIBRATION_CNT;
     sstate[axisPi] /= CALIBRATION_CNT;
     startTime = micros();
+    speedUpTime = startTime;
     return calCnt++;
   }
   return false;
@@ -77,10 +78,18 @@ void Hover::Regulate(void) {
   int aR = sensor->angleRoll - sstate[axisRo];
   smp[axisRo] += aR > angDeadzone || aR < -angDeadzone ? aR : 0;
   int aP = sensor->anglePitch - sstate[axisPi]; 
-  smp[axisRo] += aP > angDeadzone || aP < -angDeadzone ? aP : 0;
+  smp[axisPi] += aP > angDeadzone || aP < -angDeadzone ? aP : 0;
+  /*
+  if (smp[axisPi] > 10 || smp[axisPi] < -10 || smp[axisRo] > 10 || smp[axisRo] < -10) {
+    Serial.print(smp[axisPi]);
+    Serial.print(", ");
+    Serial.print(sstate[axisPi]);
+    Serial.println(" epic fail!");
+  }
+  */
   // Speed timing sequence, increase time SPEED_UP_LIMIT times then decrease the rest...
   if (micros() - speedUpTime > SEC) {
-    if (++speedUpCnt < SPEED_UP_LIM) {
+    if (++speedUpCnt <= SPEED_UP_LIM - START_SPEED) {
       ++speed[LF];
       ++speed[RF];
       ++speed[LB];
@@ -132,7 +141,7 @@ void Hover::Regulate(void) {
     u[axisRo] = K[axisRo] * (e[axisRo] + Td[axisRo] * (e[axisRo] - eOld[axisRo]));
     // axis Pitch
     e[axisPi] = smp[axisPi] / SAMPLE_CNT;
-    u[axisPi] = K[axisPi] * (e[axisPi] + Td[axisPi] * (e[axisPi] - eOld[axisPi]));  
+    u[axisPi] = K[axisPi] * (e[axisPi] + Td[axisPi] * (e[axisPi] - eOld[axisPi]));
     // LIMIT ENGINE MIN MAX SPEED
     speed[LF] = max(min(speed[LF] + u[axisRo] - u[axisPi], MOTOR_MAX), MOTOR_MIN);
     speed[RF] = max(min(speed[RF] - u[axisRo] - u[axisPi], MOTOR_MAX), MOTOR_MIN);
@@ -143,7 +152,21 @@ void Hover::Regulate(void) {
     motors[RF].setSpeed(speed[RF]);
     motors[LB].setSpeed(speed[LB]);
     motors[RB].setSpeed(speed[RB]);
+    /*
+    // debug!
+    if (e[axisRo] != 0 || e[axisPi] != 0) {
+      Serial.print("ERR: ");
+      Serial.print(speed[LF]);
+      Serial.print(", ");
+      Serial.print(speed[RF]);
+      Serial.print(", ");
+      Serial.print(speed[LB]);
+      Serial.print(", ");
+      Serial.println(speed[RB]);
+    }
+    */
     // Reset samples
+    sampleCnt = 0;
     //smp[axisX] = smp[axisY] = smp[axisZ] = smp[axisYa] = 0; 
     smp[axisRo] = smp[axisPi] = 0; 
     // Store state
