@@ -17,8 +17,8 @@ char* buildSensorPackage(const sensordata &data, char* res, int &len) {
   len += sprintf(&res[len], "lb:%d!", data.motorSpeed[LB]);
   len += sprintf(&res[len], "rb:%d!", data.motorSpeed[RB]);
 
-  len += sprintf(&res[len], "temp:%d!", (int)data.temperature);
-  len += sprintf(&res[len], "height:%d!", (int)data.height);
+  len += sprintf(&res[len], "temp:%d!", (int)data.temperature / 100);
+  len += sprintf(&res[len], "height:%d!", (int)data.height / 100);
 
   len += sprintf(&res[len], "yaw:%d!", data.angleYaw);
   len += sprintf(&res[len], "pitch:%d!", data.anglePitch);

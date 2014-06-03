@@ -56,8 +56,8 @@ struct sensordata {
   /*Accelerations*/
   VectorInt16 acc;
 
-  float temperature;
-  float pressure;
+  int32_t temperature;
+  int32_t pressure;
   float height;
   ps3Controller ps3;
 };
