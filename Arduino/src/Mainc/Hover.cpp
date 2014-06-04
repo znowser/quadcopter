@@ -1,13 +1,14 @@
 #include "Hover.h"
 
-Hover::Hover(Motor *motors, sensordata *sensor, float refAltitude) {
-  init(motors, sensor, refAltitude);
+Hover::Hover(Motor *motors, sensordata *sensor, float ref[6]) {
+  init(motors, sensor, ref);
 }
 
 void Hover::init(Motor *motors, sensordata *sensor, float _ref[6]) {
   // Hardware
   this->motors = motors;
   this->sensor = sensor;    
+  timestamp = speedUpCnt = timestampSpeed = 0;
   for (int axis = axisX; axis <= axisYa; ++axis) {
     ref[axis] = _ref[axis];
     Td[axis] = 4.f;
@@ -16,6 +17,7 @@ void Hover::init(Motor *motors, sensordata *sensor, float _ref[6]) {
     e[axis] = eOld[axis] = u[axis] = 0;
   }
   speed[LF] = speed[RF] = speed[LB] = speed[RB] = START_SPEED;
+  Serial.println("Hover initialized...");
 }
 
 void Hover::Regulate(void) {
@@ -28,7 +30,8 @@ void Hover::Regulate(void) {
     return;
   }
   // Speed timing sequence, increase time SPEED_UP_LIMIT times then decrease the rest...
-  if (time - startTime > speedUpCnt * SEC) {
+  if (time - timestampSpeed > SEC) {
+    timestampSpeed = time;
     if (++speedUpCnt <= SPEED_UP_LIM - START_SPEED) {
       ++speed[LF];
       ++speed[RF];
@@ -65,9 +68,9 @@ void Hover::KillMotors() {
 void Hover::calcPID(float t) {
   int axis;
   for (axis = 0; axis < 6; ++axis) {
-    e[axis] = sensor->data[axis] - ref[axis];
+    e[axis] = sensor->acc[axis] - ref[axis];
     I[axis] = I[axis] + (t / Ti[axis]) * e[axis];
-    u[axis] = K[axis] * (e[axis] + I[axis] + (Td[axis]/dt) * (e[axis] - eOld[axis]));
+    u[axis] = K[axis] * (e[axis] + I[axis] + (Td[axis] / t) * (e[axis] - eOld[axis]));
     eOld[axis] = e[axis];
   }
 }

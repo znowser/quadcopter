@@ -2,6 +2,9 @@
 #include "Motor.h"
 #include "BussProtocol.h"
 
+#define axisRo 3
+#define axisPi 4
+#define axisYa 5
 
 //Function that send away the whole sensorstruct to the rasp
 //Format the package by martins format
@@ -17,12 +20,12 @@ char* buildSensorPackage(const sensordata &data, char* res, int &len) {
   len += sprintf(&res[len], "lb:%d!", data.motorSpeed[LB]);
   len += sprintf(&res[len], "rb:%d!", data.motorSpeed[RB]);
 
-  len += sprintf(&res[len], "temp:%d!", (int)data.temperature / 100);
-  len += sprintf(&res[len], "height:%d!", (int)data.height / 100);
+  len += sprintf(&res[len], "temp:%d!", (int)data.temperature);
+  len += sprintf(&res[len], "height:%d!", (int)data.height);
 
-  len += sprintf(&res[len], "yaw:%d!", data.angleYaw);
-  len += sprintf(&res[len], "pitch:%d!", data.anglePitch);
-  len += sprintf(&res[len], "roll:%d!", data.angleRoll);
+  len += sprintf(&res[len], "yaw:%d!", data.acc[axisYa]);
+  len += sprintf(&res[len], "pitch:%d!", data.acc[axisPi]);
+  len += sprintf(&res[len], "roll:%d!", data.acc[axisRo]);
   return res;
 }
 
