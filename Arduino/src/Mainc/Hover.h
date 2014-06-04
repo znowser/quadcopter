@@ -41,24 +41,20 @@
 class Hover {
 
 private:
-  /* Hardware */
   Motor *motors;
   sensordata *sensor;
-  /* Time */
-  unsigned long startTime, lastTime;
-  int speedUpCnt;
-  /* PD */
-  float e[6], eOld[6], u[6];
+  unsigned long timestamp;
+  int speedUpCnt, calCnt;  
+  float e[6], eOld[6], u[6], ref[6];
   float K[6], Td[6], Ti[6];
-  /* MOTOR EFFECT */
   float speed[4];
-  int runCnt;
-
+  void calcPID(float t);
+  
 public:
-  Hover(Motor *motors, sensordata *sensor, float refAltitude);
-  void init(Motor *motors, sensordata *sensor, float refAltitude);
-  bool Calibrate(void);
+  Hover(Motor *motors, sensordata *sensor, float refAltitude[6]);
+  void init(Motor *motors, sensordata *sensor, float refAltitude[6]);
   void Regulate(void);
+  void KillMotors(void);
 };
 
 #endif
