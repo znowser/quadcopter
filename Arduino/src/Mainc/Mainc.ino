@@ -77,8 +77,9 @@ int mainf() {
       }
       */
       //send the sensorstruct to the raspberry or regulate
-      if (regulator_activated && regulator.Calibrate())
+      /*if (regulator_activated && regulator.Calibrate())
         regulator.Regulate();
+        */
    //   else
    //     serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
     }
@@ -115,7 +116,3 @@ void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage batt
   sensorData.pressure = baro.getPressure(MS561101BA_OSR_4096);
   sensorData.height = getAltitude(sensorData.pressure, sensorData.temperature);
 }
-
-
-
-
