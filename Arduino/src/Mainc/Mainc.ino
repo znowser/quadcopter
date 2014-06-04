@@ -94,17 +94,14 @@ int mainf() {
       if (++sendCnt % 10 == 0) {
         //Serial.write(buildSensorPackage(sensorData, tmp, len), len);
         Serial.print("Raw z acceleration ");
-        //Serial.println(sensorData.rawacc.z*0.0012043 - 9.82);
         Serial.println(h);
-        /*Serial.print("SensorData ");
-        Serial.print(sensorData.acc.z / (9.8*2));
-        Serial.print(" m/s^2");
-        Serial.print("  Estimated height ");
-        Serial.print(estimateHeight(sensorData.acc.z));
-        Serial.println(" m.");*/
-       // Serial.println(sensorData.acc.z);
-        //Serial.println();
       }
+      /*
+      if (++sendCnt % 10 == 0) {
+        Serial.write(buildSensorPackage(sensorData, tmp, len), len);
+        Serial.println();
+      }
+      */
       //send the sensorstruct to the raspberry or regulate
       /*if (regulator_activated && regulator.Calibrate())
         regulator.Regulate();
@@ -272,6 +269,3 @@ float estimateHeight(int16_t accZ){
   lastUpdate = micros();
   return position;
 }
-
-
-

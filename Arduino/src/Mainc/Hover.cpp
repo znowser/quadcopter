@@ -18,8 +18,8 @@ void Hover::init(Motor *motors, sensordata *sensor, float refAltitude) {
   }
   // PD vars
   for (int i = 0; i < 6; ++i) {
-    Td[i] = 4.f;               // Best guess, keep lower then 1
-    K[i] = .16f;                 // Best guess, regulate level of both P and D
+    Td[i] = 4.f;               
+    K[i] = .0675f;                 
     e[i] = eOld[i] = u[i] = 0;
   }
   // Initial motor speed, then first when Regulate() is called.
@@ -87,23 +87,23 @@ void Hover::Regulate(void) {
     Serial.println(" epic fail!");
   }
   */
-  /*
+  
   // Speed timing sequence, increase time SPEED_UP_LIMIT times then decrease the rest...
   if (micros() - speedUpTime > SEC) {
-    if (++speedUpCnt <= (SPEED_UP_LIM - START_SPEED) / DECIMAL_SHIFT) {
-      speed[LF] += DECIMAL_SHIFT;
-      speed[RF] += DECIMAL_SHIFT;
-      speed[LB] += DECIMAL_SHIFT;
-      speed[RB] += DECIMAL_SHIFT;
-    } else {
-      speed[LF] -= 2 * DECIMAL_SHIFT;
-      speed[RF] -= 2 * DECIMAL_SHIFT;
-      speed[LB] -= 2 * DECIMAL_SHIFT;
-      speed[RB] -= 2 * DECIMAL_SHIFT;
+    if (++speedUpCnt <= SPEED_UP_LIM - START_SPEED) {
+      ++speed[LF];
+      ++speed[RF];
+      ++speed[LB];
+      ++speed[RB];
+    } else if (speedUpCnt > SPEED_UP_LIM - START_SPEED + CRUISE_TIME){
+      speed[LF] -= 2;
+      speed[RF] -= 2;
+      speed[LB] -= 2;
+      speed[RB] -= 2;
     }
     speedUpTime = micros();
   }
-  */
+  
   // Do stuff on sensor data, use average value of SAMPLE_CNT values.
   if (++sampleCnt % SAMPLE_CNT == 0) {
     /*
