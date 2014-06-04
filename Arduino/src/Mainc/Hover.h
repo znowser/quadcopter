@@ -45,15 +45,11 @@ private:
   Motor *motors;
   sensordata *sensor;
   /* Time */
-  unsigned long startTime, speedUpTime;
+  unsigned long startTime, lastTime;
   int speedUpCnt;
-  /* Calibration */
-  int calCnt, sampleCnt;  
-  //long a[3][2], v[3][2], p[3][2], pRef[3];
-  long smp[6], sstate[6];
   /* PD */
   float e[6], eOld[6], u[6];
-  float K[6], Td[6];
+  float K[6], Td[6], Ti[6];
   /* MOTOR EFFECT */
   float speed[4];
   int runCnt;
@@ -63,7 +59,6 @@ public:
   void init(Motor *motors, sensordata *sensor, float refAltitude);
   bool Calibrate(void);
   void Regulate(void);
-
 };
 
 #endif
