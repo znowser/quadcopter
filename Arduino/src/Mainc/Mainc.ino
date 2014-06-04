@@ -25,6 +25,7 @@ void loop() {
 /*========================================*/
 
 float getAltitude(float press, float temp);
+float estimateHeight(int16_t accZ);
 float getEstimatedAlt(float height);
 float invSqrt(float number);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
@@ -37,13 +38,6 @@ int mainf() {
   sensordata sensorData;
   float ypr[3];
 
-  /*==========Init Sensors============*/
-  //init gyro and magnetic field
-  MPUAbstraction mpu = MPUAbstraction();
-  //barometer and temperature
-  MS561101BA baro = MS561101BA(MS561101BA_ADDR_CSB_LOW);
-
-  /*===================================*/
   //*==========Init Motors=============*/
   //Hardware mapping of motors
   motor[LF].init(10);
@@ -57,8 +51,14 @@ int mainf() {
   battery[CELL2].init(A1);
   battery[CELL3].init(A2);
   /*==================================*/
-  
-  delay(1000);
+
+  /*==========Init Sensors============*/
+  //barometer and temperature
+  MS561101BA baro = MS561101BA(MS561101BA_ADDR_CSB_LOW);
+  //init gyro and magnetic field
+  MPUAbstraction mpu = MPUAbstraction();
+  /*===================================*/
+
 
   //serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
   /*==========Hover regulator=============*/
@@ -67,12 +67,13 @@ int mainf() {
   int len = 0;
   char tmp[150];
   int sendCnt = 0;
+  long mean = 0;
   while (true) {
     //TODO continue to implement the new buss protocol
     //  serial.recvRasp();
 
     //check if there is new sensordata to recieve from the sensor card
-    if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
+    if (mpu.readYawPitchRoll(ypr, sensorData.acc, sensorData.rawacc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
       
@@ -89,9 +90,20 @@ int mainf() {
       //Serial.println(getEstimatedAlt(sensorData.height));
       //Serial.print("sensor freq: ");
       //Serial.println(++sendCnt / (micros() / 1000000.f));
+      float h = estimateHeight(sensorData.rawacc.z);
       if (++sendCnt % 10 == 0) {
-        Serial.write(buildSensorPackage(sensorData, tmp, len), len);
-        Serial.println();
+        //Serial.write(buildSensorPackage(sensorData, tmp, len), len);
+        Serial.print("Raw z acceleration ");
+        //Serial.println(sensorData.rawacc.z*0.0012043 - 9.82);
+        Serial.println(h);
+        /*Serial.print("SensorData ");
+        Serial.print(sensorData.acc.z / (9.8*2));
+        Serial.print(" m/s^2");
+        Serial.print("  Estimated height ");
+        Serial.print(estimateHeight(sensorData.acc.z));
+        Serial.println(" m.");*/
+       // Serial.println(sensorData.acc.z);
+        //Serial.println();
       }
       //send the sensorstruct to the raspberry or regulate
       /*if (regulator_activated && regulator.Calibrate())
@@ -227,6 +239,38 @@ float invSqrt(float number) {
   y = * ( float * ) &i;
   y = y * ( f - ( x * y * y ) );
   return y;
+}
+
+#define DT 0.2 // 10 ms
+#define DEADZONE 0.3
+
+//return estimated height in m.
+float estimateHeight(int16_t accZ){
+  //static float velocity[2];
+  //static float position[2];
+  //static float prevacc;
+  //static uint8_t n;
+  static float velocity;
+  static float position;
+  static unsigned long lastUpdate;
+  
+  
+  if(micros() - lastUpdate < DT*1000000)
+    return position;
+  
+  //set acc to zero if within deadzone otherwise convert to m/s^2.
+  float acc = accZ < DEADZONE && accZ > -DEADZONE ? 0.0:accZ*0.0012043 - 9.82;
+  
+  velocity += acc*DT;
+  position += velocity*DT;
+  //velocity[n % 2] = velocity[(n + 1) % 2] + ((acc - prevacc)*DT / 2);
+  //position[n % 2] = position[(n + 1) % 2] + ((velocity[n % 2] - velocity[(n + 1) % 2])*DT / 2);
+  
+  //++n;
+  //prevacc = acc;
+  //return position[n % 2];
+  lastUpdate = micros();
+  return position;
 }
 
 

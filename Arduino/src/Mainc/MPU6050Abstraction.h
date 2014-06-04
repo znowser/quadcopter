@@ -29,17 +29,10 @@ private:
   uint8_t mpuIntStatus;
   uint16_t fifoCount;     // count of all bytes currently in FIFO
 
-  // orientation/motion vars
-  Quaternion q;           // [w, x, y, z]         quaternion container
-  VectorInt16 aa;         // [x, y, z]            accel sensor measurements
-  VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-  VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
-  VectorFloat gravity;    // [x, y, z]            gravity vector
-
   void init();
 public:
   MPUAbstraction();
-  bool readYawPitchRoll(float ypr[3], VectorInt16 &acc);
+  bool readYawPitchRoll(float ypr[3], VectorInt16 &acc, VectorInt16 &accRaw);
   static void MPUInt();
   bool deviceStatus();
 };

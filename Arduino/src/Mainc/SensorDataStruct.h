@@ -55,6 +55,7 @@ struct sensordata {
   int angleRoll;
   /*Accelerations*/
   VectorInt16 acc;
+  VectorInt16 rawacc;
 
   int32_t temperature;
   int32_t pressure;
