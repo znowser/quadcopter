@@ -3,3 +3,5 @@ Known design-issues
 * Both GND pins on the 7 segment led display should be connected to Vcc.
 * Reset from Raspberry missing pulldown resistor.
 * Reset from pushbutton missing pulldown resistor.
+* The connector to the raspberry is rotated in the wrong directory.
+* It would be nice to have a led indicating reset of the AVR.
