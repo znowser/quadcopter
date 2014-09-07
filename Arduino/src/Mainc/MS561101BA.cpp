@@ -63,6 +63,7 @@ void MS561101BA::init(uint8_t address) {
   reset(); // reset the device to populate its internal PROM registers
   delay(1000); // some safety time
   readPROM(); // reads the PROM into object variables for later use
+  delay(1000);
 }
 
 float MS561101BA::getPressure(uint8_t OSR) {
@@ -119,8 +120,8 @@ uint32_t MS561101BA::rawPressure(uint8_t OSR) {
       startConversion(MS561101BA_D1 + OSR);
       lastPresConv = now;
     }
-    return pressCache;
   }
+  return pressCache;
 }
 
 uint32_t MS561101BA::rawTemperature(uint8_t OSR) {
@@ -137,6 +138,47 @@ uint32_t MS561101BA::rawTemperature(uint8_t OSR) {
   }
   return tempCache;
 }
+
+//takes about 20ms to read both temp and pressure.
+void MS561101BA::getData(int32_t &temp, int32_t &press, uint8_t OSR){
+  //formulas found at http://www.meas-spec.com/downloads/MS5611-01BA03.pdf
+  
+  startConversion(MS561101BA_D2 + OSR);
+  //max convertion time for the ADC with MS561101BA_OSR_4096 is 9.04 ms
+  delay(1);
+  //delay(10);
+  //dT = D2 - TREF = D2 - C5 * 2^8
+  //TEMP = 20°C + dT * TEMPSENS = 2000 + dT * C6 / 2^23
+  //2007 = 20.07 °C
+  //dT = (int32_t)(rawTemp - ((uint32_t)_C[4] << 8));
+  int32_t dT = getConversion(MS561101BA_D2 + OSR) - ((uint32_t)_C[4] << 8);
+  temp = (dT * _C[5]) >> 23;
+  
+  //SECOND ORDER TEMPERATURE COMPENSATION (without very low temp case)
+  int32_t T2 = 0;
+  int32_t OFF2 = 0;
+  int32_t SENS2 = 0;
+  if(temp < 0){
+    T2 = dT*dT >> 31;
+    OFF2 = 5*temp*temp >> 1;
+    SENS2 = 5*temp*temp >> 2;
+  }
+  
+  temp = temp - T2 + 2000;
+  
+    
+  startConversion(MS561101BA_D1 + OSR);
+  //max convertion time for the ADC with MS561101BA_OSR_4096 is 9.04 ms
+  int64_t OFF  = ((uint32_t)_C[1] <<16) + (((int64_t)dT * _C[3]) >> 7) - OFF2;
+  int64_t SENS = ((uint32_t)_C[0] <<15) + (((int64_t)dT * _C[2]) >> 8) - SENS2;
+  //(( (rawPress * sens ) >> 21) - off) >> 15;
+  //100009 = 1000.09 mbar
+  //delay(10);
+  delay(1);
+  press = (((getConversion(MS561101BA_D1 + OSR)*SENS) >> 21) - OFF) >> 15;
+}
+
+
 
 
 // see page 11 of the datasheet

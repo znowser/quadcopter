@@ -28,15 +28,14 @@ public:
   void callibrateESC();
   //void programESC(); //TODO
   //setter functions
-  int setSpeed(int percent);
-  int operator=(int);
+  unsigned setSpeed(unsigned percent);
+  unsigned operator=(unsigned);
   
   //getter functions
-  int getSpeed();
-  operator int();  
+  unsigned getSpeed();
+  operator unsigned();  
   
-  enum SPEED { 
-    MAX = 180, MIN = 75, OFF = 75     };
+  enum SPEED { MAX = 180, MIN = 80, OFF = 75 };
 };
 
 #endif

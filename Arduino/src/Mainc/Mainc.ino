@@ -6,7 +6,7 @@
 #include "MS561101BA.h"
 #include "SensorDataStruct.h"
 #include "Hover.h"
-#include "SerialBuss.h"
+//#include "SerialBuss.h"
 #include "BussProtocol.h"
 
 //change this variable to true if you want to turn on the regulator, Torbjörn.
@@ -27,7 +27,8 @@ float getAltitude(float press, float temp);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 //cannot be called with the name: main(), strange Arduino syndrome!
 int mainf() {
-  SerialBuss serial;
+  Serial.begin(115200);
+  //SerialBuss serial;
   Motor motor[4];
   CellVoltage battery[3];
   sensordata sensorData;
@@ -54,12 +55,14 @@ int mainf() {
   battery[CELL3].init(A2);
   /*==================================*/
 
-  serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
+  //serial.registerCallback(ps3DataCallback, &sensorData, PS3_CONTROLLER_PACKAGE);
   /*==========Hover regulator=============*/
-  Hover regulator(motor, &sensorData, 0.5);
+  float refVal[6] = { 0, 0, 1.0, 0, 0, 0 };
+  Hover regulator(motor, &sensorData, refVal);
   //Main regulator/sensor loop
   int len = 0;
-  char tmp[200];
+  char tmp[150];
+  int sendCnt = 0;
   while (true) {
     //TODO continue to implement the new buss protocol
   //  serial.recvRasp();
@@ -68,9 +71,16 @@ int mainf() {
     if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
       //update sensor struct
       updateSensorValues(sensorData, motor, battery, baro, ypr);
+      /*
+      if (++sendCnt % 10 == 0) {
+        Serial.write(buildSensorPackage(sensorData, tmp, len), len);
+        Serial.println();
+      }
+      */
       //send the sensorstruct to the raspberry or regulate
-      if (regulator_activated && regulator.Calibrate())
+      if (regulator_activated)
         regulator.Regulate();
+        
    //   else
    //     serial.sendRasp(SENSORDATA_PACKAGE, buildSensorPackage(sensorData, tmp, len), len);
     }
@@ -91,9 +101,9 @@ void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage batt
   //must be a small delay between the two functioncalls.
   sensorData.temperature = baro.getTemperature(MS561101BA_OSR_4096);
   //convert from radians to degrees
-  sensorData.angleYaw = ypr[0]  * 180 / M_PI;
-  sensorData.anglePitch = ypr[1]  * 180 / M_PI;
-  sensorData.angleRoll = ypr[2]  * 180 / M_PI;
+  sensorData.gyro[2] = ypr[0]  * 180 / M_PI;
+  sensorData.gyro[1] = ypr[1]  * 180 / M_PI;
+  sensorData.gyro[0] = ypr[2]  * 180 / M_PI;
   sensorData.cellVoltage[CELL1] = battery[CELL1].getVoltage();
   sensorData.cellVoltage[CELL2] = battery[CELL2].getVoltage();
   sensorData.cellVoltage[CELL3] = battery[CELL3].getVoltage();
@@ -107,7 +117,3 @@ void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage batt
   sensorData.pressure = baro.getPressure(MS561101BA_OSR_4096);
   sensorData.height = getAltitude(sensorData.pressure, sensorData.temperature);
 }
-
-
-
-

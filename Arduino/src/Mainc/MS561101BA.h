@@ -71,6 +71,7 @@ class MS561101BA {
     int32_t getDeltaTemp(uint8_t OSR);
     uint32_t rawPressure(uint8_t OSR);
     uint32_t rawTemperature(uint8_t OSR);
+    void getData(int32_t &temp, int32_t &press, uint8_t OSR);
     int readPROM();
     void reset();
     uint32_t lastPresConv, lastTempConv;

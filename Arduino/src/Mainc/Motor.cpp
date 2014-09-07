@@ -31,27 +31,27 @@ void Motor::callibrateESC(){
 }
 
 //allow different syntax for setter
-int Motor::operator=(int speed){
+unsigned Motor::operator=(unsigned speed){
   return setSpeed(speed);
 }
 
 //Set the motor-speed. If the ESC is not initialized or an invalid value is passed
 //the function will return 0, speed otherwise.
-int Motor::setSpeed(int _speed){
-  int speed = (((float)_speed) / 100.0) * ((float)(MAX - MIN)) + MIN;
-  if(initialized && speed >= MIN && speed <= MAX){
-    this->speed = speed;
-    esc.write(speed);
-    return speed;
+unsigned Motor::setSpeed(unsigned _speed){
+  _speed += MIN;
+  if(initialized && _speed <= MAX){
+    this->speed = _speed;
+    esc.write(this->speed);
+    return _speed;
   }
   return 0;
 }
 
-int Motor::getSpeed(){
-  return (((float)(this->speed - MIN)) / ((float)(MAX - MIN))) * 100;
+unsigned Motor::getSpeed(){
+  return this->speed - MIN;
 }
 
 //allow different syntax for getter
-Motor::operator int(){
-  return speed;
+Motor::operator unsigned(){
+  return speed - MIN;
 }

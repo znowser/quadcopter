@@ -39,7 +39,7 @@ private:
   void init();
 public:
   MPUAbstraction();
-  bool readYawPitchRoll(float ypr[3], VectorInt16 &acc);
+  bool readYawPitchRoll(float ypr[3], int16_t acc[3]);
   static void MPUInt();
   bool deviceStatus();
 };

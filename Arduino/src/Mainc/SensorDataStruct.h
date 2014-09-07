@@ -37,6 +37,7 @@
 #define CELL2 1
 #define CELL3 2
 
+
 struct ps3Controller {
   int button[NUM_OF_BUTTONS];
   int stick1_x;
@@ -48,13 +49,16 @@ struct ps3Controller {
 struct sensordata {
   /*Angles*/
   int motorSpeed[4];
-  float cellVoltage[3];
-  float angleYaw;
-  float anglePitch;
-  float angleRoll;
-  /*Accelerations*/
+  int cellVoltage[3];
+  int16_t acc[3];
+  int16_t gyro[3];
+  /*
+  int angleYaw;
+  int anglePitch;
+  int angleRoll;
+  Accelerations
   VectorInt16 acc;
-
+  */
   float temperature;
   float pressure;
   float height;

@@ -10,6 +10,11 @@ MPUAbstraction::MPUAbstraction(){
 
 void MPUAbstraction::init(){ 
   Wire.begin();
+  // set 400kHz mode @ 16MHz CPU or 200kHz mode @ 8MHz CPU
+  // quadruple i2c buss speed to aviod FIFO-overflow from the sensorcard.
+  //source : http://www.i2cdevlib.com/forums/topic/27-fifo-overflow/ 
+  TWBR = 12;
+  
   // initialize device
   //Serial.println("Initializing I2C devices...");
   devStatus = mpu.dmpInitialize();
@@ -28,7 +33,7 @@ void MPUAbstraction::MPUInt(){
 }
 
 //return true if yaw, pitch, roll was reveiced from the sensor MPU6050, false otherwise
-bool MPUAbstraction::readYawPitchRoll(float ypr[3], VectorInt16 &acc){
+bool MPUAbstraction::readYawPitchRoll(float ypr[3], int16_t acc[3]){
   // if programming failed or there is no data available, don't try to do anything
   if (mpuDataReady == false || (devStatus != 0)) return false;
 
@@ -45,7 +50,7 @@ bool MPUAbstraction::readYawPitchRoll(float ypr[3], VectorInt16 &acc){
   if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
     // reset so we can continue cleanly
     mpu.resetFIFO();
-    //Serial.println(F("FIFO overflow!"));
+    Serial.println(F("FIFO overflow!"));
   }
   // otherwise, check for DMP data ready interrupt (this should happen frequently)
   else if (mpuIntStatus & 0x02) {
@@ -69,20 +74,12 @@ bool MPUAbstraction::readYawPitchRoll(float ypr[3], VectorInt16 &acc){
     VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
     mpu.dmpGetAccel(&aa, fifoBuffer);
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-    mpu.dmpGetLinearAccelInWorld(&acc, &aaReal, &q);
+    mpu.dmpGetLinearAccelInWorld((VectorInt16*)acc, &aaReal, &q);
     
     //invert yaw and pitch to correspond to the real world
     //roll is right from begining.
     ypr[0] = -ypr[0];
-    ypr[1] = -ypr[1];
-    
-    //dont allow negative angles
-    if (ypr[0] < 0)
-      ypr[0] = 2*M_PI + ypr[0];
-    if (ypr[1] < 0)
-      ypr[1] = 2*M_PI + ypr[1];
-    if (ypr[2] < 0)
-      ypr[2] = 2*M_PI + ypr[2];    
+    ypr[1] = -ypr[1];  
     return true;
   }
   return false;
