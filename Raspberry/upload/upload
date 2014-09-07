@@ -1,19 +1,17 @@
 #!/bin/bash
 
 
-
 if [ $# -eq 0 ]
   then
     echo "File to upload must be given as argument"
     exit
 fi
 
-
-echo "Notice: "
-echo "== DONT TRY TO RUN MULTIPLE TERMINALS AT THE SAME TIME ON THE SERIAL BUSS =="
-
-sudo ./reset &
-
 #avrdude -C/etc/avrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:Mainc.cpp.hex:i
+#avrdude -C/etc/avrdude.conf -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:$1:i
 
-avrdude -C/etc/avrdude.conf -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:$1:i
+
+#erase  avr memory
+#avrdude -C avrdude.conf -c gpio -p m128 -e 
+
+avrdude -C avrdude.conf -c gpio -p m128 -D -Uflash:w:$1:i
