@@ -1,6 +1,6 @@
+#include "../lib/Arduino/Arduino.h"
 #include "Motor.h"
-#include <util/delay.h>
-//#include <arduino.h>
+
 
 Motor::Motor(int pin){
   initialized = false;
@@ -19,16 +19,16 @@ void Motor::init(int pin){
     //=== arm ESC ===
     esc.write(MIN);
     //To arm the ESC a PPM with value MIN is applied for 1.5s.
-    _delay_ms(1500);
+    delay(1500);
     //==============
   }
 }
 
 void Motor::callibrateESC(){
   esc.write(MAX);
-  _delay_ms(2000);
+  delay(2000);
   esc.write(MIN);
-  _delay_ms(2000);
+  delay(2000);
 }
 
 //allow different syntax for setter

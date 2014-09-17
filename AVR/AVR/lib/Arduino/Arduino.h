@@ -30,11 +30,14 @@
 
 #include "binary.h"
 
-#define F_CPU 16000000
-
 #ifdef __cplusplus
 extern "C"{
 #endif
+
+#ifndef __AVR_ATmega128__
+	#define __AVR_ATmega128__
+#endif
+#define F_CPU 16000000L
 
 #define HIGH 0x1
 #define LOW  0x0

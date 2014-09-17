@@ -109,7 +109,6 @@ unsigned long micros() {
 void delay(unsigned long ms)
 {
 	uint16_t start = (uint16_t)micros();
-
 	while (ms > 0) {
 		if (((uint16_t)micros() - start) >= 1000) {
 			ms--;
