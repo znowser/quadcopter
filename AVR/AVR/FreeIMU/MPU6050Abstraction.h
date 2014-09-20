@@ -11,6 +11,8 @@
 #define MPU6050_INCLUDE_DMP_MOTIONAPPS20
 #include "MPU6050.h"
 
+//Hardware wiring
+#define MPU_INTERRUPT_PIN 9
 
 class MPUAbstraction{
 private:

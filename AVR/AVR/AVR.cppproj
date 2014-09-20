@@ -170,6 +170,12 @@
     <Compile Include="FreeIMU\MS561101BA.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="HoverRegulator\Hover.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HoverRegulator\Hover.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="lib\Arduino\Arduino.h">
       <SubType>compile</SubType>
     </Compile>
@@ -281,6 +287,7 @@
     <Folder Include="Motor" />
     <Folder Include="cellVoltage" />
     <Folder Include="FreeIMU" />
+    <Folder Include="HoverRegulator" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

@@ -24,12 +24,13 @@ void MPUAbstraction::init(){
     packetSize = mpu.dmpGetFIFOPacketSize();
     //attach FreeIMUs INTA to interrupt port (Digital in port 2)
     //register sensorcallback
-    attachInterrupt(0, MPUInt, RISING);
+    attachInterrupt(MPU_INTERRUPT_PIN, MPUInt, RISING);
   }
 }
 
 void MPUAbstraction::MPUInt(){
   mpuDataReady = true;
+  Serial1.println("got interrupt!");
 }
 
 //return true if yaw, pitch, roll was reveiced from the sensor MPU6050, false otherwise
