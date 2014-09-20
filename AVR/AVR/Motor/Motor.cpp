@@ -19,7 +19,7 @@ void Motor::init(int pin){
     //=== arm ESC ===
     esc.write(MIN);
     //To arm the ESC a PPM with value MIN is applied for 1.5s.
-    delay(1500);
+   // delay(1500);
     //==============
   }
 }

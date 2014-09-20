@@ -37,10 +37,12 @@ void analogReference(uint8_t mode)
 	analog_reference = mode;
 }
 
+//Modified by RamboErik 2014-09-20
+//Only uses 8bit res ADC
+//Value between 0- 255 represent 0v - 5v.
 int analogRead(uint8_t pin)
 {
 	uint8_t low, high;
-
 #if defined(analogPinToChannel)
 #if defined(__AVR_ATmega32U4__)
 	if (pin >= 18) pin -= 18; // allow for channel or pin numbers
@@ -67,6 +69,8 @@ int analogRead(uint8_t pin)
 	// to 0 (the default).
 #if defined(ADMUX)
 	ADMUX = (analog_reference << 6) | (pin & 0x07);
+	//8 bit res
+	ADMUX |= (1 << ADLAR);
 #endif
 
 	// without a delay, we seem to read from the wrong channel
@@ -74,7 +78,7 @@ int analogRead(uint8_t pin)
 
 #if defined(ADCSRA) && defined(ADCL)
 	// start the conversion
-	sbi(ADCSRA, ADSC);
+	sbi(ADCSR, ADSC);
 
 	// ADSC is cleared when the conversion finishes
 	while (bit_is_set(ADCSRA, ADSC));
@@ -92,7 +96,8 @@ int analogRead(uint8_t pin)
 #endif
 
 	// combine the two bytes
-	return (high << 8) | low;
+	//only use 8bit resolution
+	return high;//(high << 8) | low;
 }
 
 // Right now, PWM output only works on the pins with

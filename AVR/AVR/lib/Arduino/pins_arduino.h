@@ -5,6 +5,16 @@
 
 #include <avr/pgmspace.h>
 
+//Not used by this implementation, undefine if defined
+#ifdef analogPinToChannel
+	#undef analogPinToChannel
+#endif
+
+#define ADC0 0
+#define ADC1 1
+#define ADC2 2
+#define ADC3 3
+#define ADC4 4
 
 #ifndef PA
 	#define PA 1
