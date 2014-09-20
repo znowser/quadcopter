@@ -46,7 +46,6 @@ int main(void)
 	delay(8000);
 	*/
 	/*==================================*/
-	/*=====Init battery cells ==========*/
 	//Hardware mapping of battery cells
 	battery[CELL1].init(ADC0);
 	battery[CELL2].init(ADC1);
@@ -64,7 +63,7 @@ int main(void)
     while(true){
 		//check if there is new sensordata to recieve from the sensor card
 		if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
-			//update sensor struct
+		//	//update sensor struct
 			updateSensorValues(sensorData, motor, battery, baro, ypr);
 		/*
 			Serial1.print("Battery level: ");
@@ -104,8 +103,7 @@ int main(void)
 			dir = !dir;
 		
 		dir?++speed:--speed;
-		*/
-				
+		*/		
 		delay(100);
     }
 }
