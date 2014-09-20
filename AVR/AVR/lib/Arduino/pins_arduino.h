@@ -5,6 +5,9 @@
 
 #include <avr/pgmspace.h>
 
+//Used by I2CDev
+#define ARDUINO 101
+
 //Not used by this implementation, undefine if defined
 #ifdef analogPinToChannel
 	#undef analogPinToChannel

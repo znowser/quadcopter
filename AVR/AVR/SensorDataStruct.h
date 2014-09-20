@@ -2,7 +2,7 @@
 #define SENSORDATA_STRUCT
 
 #include "lib/Arduino/Arduino.h"
-#include "helper_3dmath.h"
+#include "FREEIMU/helper_3dmath.h"
 
 #define JS_BUTTON_CROSS 14
 #define JS_BUTTON_TRIANGLE 12

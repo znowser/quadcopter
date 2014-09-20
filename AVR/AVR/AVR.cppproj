@@ -140,7 +140,34 @@
     <Compile Include="cellVoltage\cellVoltage.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="helper_3dmath.h">
+    <Compile Include="FreeIMU\helper_3dmath.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\I2Cdev.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\I2Cdev.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MPU6050.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MPU6050.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MPU6050Abstraction.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MPU6050Abstraction.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MPU6050_6Axis_MotionApps20.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MS561101BA.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FreeIMU\MS561101BA.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lib\Arduino\Arduino.h">
@@ -221,6 +248,18 @@
     <Compile Include="lib\Servo\Servo.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="lib\Wire\twi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\Wire\twi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\Wire\Wire.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\Wire\Wire.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Motor\Motor.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -237,9 +276,11 @@
   <ItemGroup>
     <Folder Include="lib" />
     <Folder Include="lib\Arduino\" />
+    <Folder Include="lib\Wire" />
     <Folder Include="lib\Servo\" />
     <Folder Include="Motor" />
     <Folder Include="cellVoltage" />
+    <Folder Include="FreeIMU" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
