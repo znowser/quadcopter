@@ -13,11 +13,13 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
+#define BAROMETER_DELAY 500
+
 const bool regulator_activated = true;
 float getAltitude(sensordata &sensor);
 void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
-void initSensorValues(sensordata &sensor, MS561101BA &baro);
-void initAltitudeMeasurement(sensordata &sensor);
+void initRefTemp(sensordata &sensor, MS561101BA &baro);
+void initRefPressure(sensordata &sensor, MS561101BA &baro);
 
 int main(void)
 {
@@ -38,12 +40,14 @@ int main(void)
 	MS561101BA baro = MS561101BA(MS561101BA_ADDR_CSB_LOW);
 	//*==========Init Motors=============*/
 	//Hardware mapping of motors
+	/*
 	motor[LF].init(13);
 	motor[RF].init(14);
 	motor[LB].init(15);
 	motor[RB].init(16);
 	//minimum wait time for arming
 	delay(8000);
+	*/
 	/*==================================*/
 	//Hardware mapping of battery cells
 	battery[CELL1].init(ADC0);
@@ -58,8 +62,28 @@ int main(void)
 	/*==========Hover regulator=============*/
 	float refVal[6] = { 0, 0, 1.0, 0, 0, 0 };
 	Hover regulator(motor, &sensor, refVal);
-	initSensorValues(sensor, baro);
-	
+	delay(1500);
+	initRefTemp(sensor, baro);
+	Serial1.print("temp: ");
+	Serial1.println(sensor.temperature);
+	initRefPressure(sensor, baro);
+	Serial1.print("c2: ");
+	Serial1.println(sensor.alt.c2);
+	initRefPressure(sensor, baro);
+	Serial1.print("temp: ");
+	Serial1.println(sensor.temperature);
+	initRefPressure(sensor, baro);
+	Serial1.print("c2: ");
+	Serial1.println(sensor.alt.c2);
+	initRefPressure(sensor, baro);
+	Serial1.print("c2: ");
+	Serial1.println(sensor.alt.c2);
+	initRefPressure(sensor, baro);
+	Serial1.print("c2: ");
+	Serial1.println(sensor.alt.c2);
+	initRefTemp(sensor, baro);
+	Serial1.print("temp: ");
+	Serial1.println(sensor.temperature);
 	static int printAltInterval = 32766;
 
 	Serial1.println("Before while(true){...}");
@@ -69,7 +93,7 @@ int main(void)
 		//if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
 		//	//update sensor struct
 			updateSensorValues(sensor, motor, battery, baro, ypr);
-			if (!(++printAltInterval % 2048))
+			if (!(++printAltInterval % 4096))
 				Serial1.println(sensor.height);
 		/*
 			Serial1.print("Battery level: ");
@@ -139,23 +163,17 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 }
 
 float getAltitude(sensordata &sensor) {
-	return sensor.alt.c1*(sensor.alt.c2 - log(sensor.pressure));
+	return sensor.alt.c1 * (sensor.alt.c2 - log(sensor.pressure));
 }
 
-void initSensorValues(sensordata &sensor, MS561101BA &baro) {
-	Serial1.println("Init barometer values");
-	// Barometer
-	sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
-	// Delay readings, barometer
-	delay(1000);
-	sensor.temperature = baro.getTemperature(MS561101BA_OSR_4096);
-	initAltitudeMeasurement(sensor);
-}
-
-void initAltitudeMeasurement(sensordata &sensor) {
-	Serial1.println("Init altitude measurement");
-	Serial1.println(sensor.pressure);
-	Serial1.println(sensor.temperature);
+void initRefTemp(sensordata &sensor, MS561101BA &baro) {
+	delay(BAROMETER_DELAY);
+	sensor.temperature = baro.getTemperature(MS561101BA_OSR_4096);	
 	sensor.alt.c1 = (sensor.alt.dryAirGasConst / sensor.alt.gravAcc) * sensor.temperature;
+}
+
+void initRefPressure(sensordata &sensor, MS561101BA &baro) {
+	delay(BAROMETER_DELAY);
+	sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
 	sensor.alt.c2 = log(sensor.pressure);
 }
