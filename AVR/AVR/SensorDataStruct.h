@@ -66,6 +66,7 @@ struct sensordata {
   */
   float temperature;
   float pressure;
+  int32_t rawPressure;
   float height;
   ps3Controller ps3;
   constants alt;

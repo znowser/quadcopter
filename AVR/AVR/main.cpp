@@ -88,13 +88,28 @@ int main(void)
 
 	Serial1.println("Before while(true){...}");
 
+	float min = 99999;
+	float max = 0;
+	float cur = 0;
+
     while(true){
 		//check if there is new sensordata to recieve from the sensor card
 		//if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
 		//	//update sensor struct
 			updateSensorValues(sensor, motor, battery, baro, ypr);
-			if (!(++printAltInterval % 4096))
-				Serial1.println(sensor.height);
+			if (!(++printAltInterval % 4096)) {				
+				Serial1.println(cur = baro.getPressure(MS561101BA_OSR_4096));
+				if (cur > max) {
+					max = cur;
+					Serial1.print("Max: ");
+					Serial1.println(cur);
+				} else if (cur < min) {
+					min = cur;
+					Serial1.print("Min: ");
+					Serial1.println(cur);
+				}				
+			}
+//				Serial1.println(sensor.height);
 		/*
 			Serial1.print("Battery level: ");
 			Serial1.print(battery[CELL1].getVoltage());
@@ -158,7 +173,8 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 	if (!batInterval)
 		sensor.cellVoltage[CELL3] = battery[CELL3].getVoltage();
 	// Barometer
-	sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
+	//sensor.pressure = baro.rawPressure(MS561101BA_OSR_4096);
+	sensor.rawPressure = baro.rawPressure(MS561101BA_OSR_4096);
 	sensor.height = getAltitude(sensor);
 }
 
@@ -174,6 +190,7 @@ void initRefTemp(sensordata &sensor, MS561101BA &baro) {
 
 void initRefPressure(sensordata &sensor, MS561101BA &baro) {
 	delay(BAROMETER_DELAY);
-	sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
-	sensor.alt.c2 = log(sensor.pressure);
+	//sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
+	sensor.rawPressure = baro.rawPressure(MS561101BA_OSR_4096);
+	sensor.alt.c2 = log(sensor.rawPressure / 100);
 }
