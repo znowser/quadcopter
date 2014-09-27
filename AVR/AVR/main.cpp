@@ -13,7 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
-#define MOVAVG_SIZE 32
+#define MOVAVG_SIZE 256
 
 float movavg_buff[MOVAVG_SIZE];
 int movavg_i = 0;
@@ -90,7 +90,7 @@ int main(void)
 		press = getAvg(movavg_buff, MOVAVG_SIZE);
 		//Serial1.print(press);
 		//Serial1.print(" mbar altitude: ");
-		if (!(++cnt % 256))
+		if (!(++cnt % 128))
 			Serial1.println(getAltitude(press, temperature));
 		
 		updateSensorValues(sensor, motor, battery, baro, ypr);
@@ -164,7 +164,7 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 
 float getAltitude(float press, float temp) {
 	//return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
-	return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+	//return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 	return ((pow((sea_press / press), 0.1901697808) - 1.0) * (temp + 273.15)) / 0.0065;
 }
 
