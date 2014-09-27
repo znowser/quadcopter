@@ -27,7 +27,6 @@
 #define NUM_OF_BUTTONS 17
 #define PS3CONTROLLER_DEADZONE 30
 
-
 #define LF 0  //left front
 #define RF 1  //right front
 #define LB 2  //left back
@@ -37,13 +36,19 @@
 #define CELL2 1
 #define CELL3 2
 
-
 struct ps3Controller {
   int button[NUM_OF_BUTTONS];
   int stick1_x;
   int stick1_y;
   int stick2_x;
   int stick2_y;
+};
+
+struct constants {
+	float c1;
+	float c2;
+	float dryAirGasConst = 287.058;
+	float gravAcc = 9.82327;
 };
 
 struct sensordata {
@@ -63,6 +68,7 @@ struct sensordata {
   float pressure;
   float height;
   ps3Controller ps3;
+  constants alt;
 };
 
 #endif

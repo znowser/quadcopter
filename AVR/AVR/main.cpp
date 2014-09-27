@@ -13,10 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
-//change this variable to true if you want to turn on the regulator, Torbjörn.
 const bool regulator_activated = true;
-const float sea_press = 1013.25;
-
 float getAltitude(float press, float temp);
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 int main(void)
@@ -57,12 +54,15 @@ int main(void)
 	/*==========Hover regulator=============*/
 	float refVal[6] = { 0, 0, 1.0, 0, 0, 0 };
 	Hover regulator(motor, &sensorData, refVal);
-	
+	initSensorValues(sensorData, baro);
+	static byte printAltInterval = 0;
     while(true){
 		//check if there is new sensordata to recieve from the sensor card
 		if (mpu.readYawPitchRoll(ypr, sensorData.acc)) {
 		//	//update sensor struct
 			updateSensorValues(sensorData, motor, battery, baro, ypr);
+			if (!(++printAltInterval % 8))
+				Serial1.println(sensorData.height);
 		/*
 			Serial1.print("Battery level: ");
 			Serial1.print(battery[CELL1].getVoltage());
@@ -106,29 +106,46 @@ int main(void)
     }
 }
 
-float getAltitude(float press, float temp) {
-	//return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
-	return ((pow((sea_press / press), 1 / 5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+float getAltitude(float pressure) {
+	return sensordata.alt.c1(sensordata.alt.c2 - log(press));
 }
 
 void updateSensorValues(sensordata &sensorData, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]) {
-	//temperature and pressure cannot be read directly after each other, it
-	//must be a small delay between the two functioncalls.
-	sensorData.temperature = baro.getTemperature(MS561101BA_OSR_4096);
-	//convert from radians to degrees
-	sensorData.gyro[2] = ypr[0]  * 180 / M_PI;
-	sensorData.gyro[1] = ypr[1]  * 180 / M_PI;
-	sensorData.gyro[0] = ypr[2]  * 180 / M_PI;
-	sensorData.cellVoltage[CELL1] = battery[CELL1].getVoltage();
-	sensorData.cellVoltage[CELL2] = battery[CELL2].getVoltage();
-	sensorData.cellVoltage[CELL3] = battery[CELL3].getVoltage();
-	//update motor speed
+	static byte batInterval = 255;
+	// Battery Cell 1
+	if (!++batInterval)
+		sensorData.cellVoltage[CELL1] = battery[CELL1].getVoltage();
+	// Gyro
+	sensorData.gyro[2] = ypr[0];
+	sensorData.gyro[1] = ypr[1];
+	sensorData.gyro[0] = ypr[2];
+	// Battery Cell 2
+	if (!batInterval)
+		sensorData.cellVoltage[CELL2] = battery[CELL2].getVoltage();	
+	// Motor	
 	sensorData.motorSpeed[LF] = motor[LF].getSpeed();
 	sensorData.motorSpeed[RF] = motor[RF].getSpeed();
 	sensorData.motorSpeed[LB] = motor[LB].getSpeed();
 	sensorData.motorSpeed[RB] = motor[RB].getSpeed();
-	//get pressure, cannot be done directly after getTemperature, The sensorcard need
-	//a small delay between the function calls.
+	// Battery Cell 3
+	if (!batInterval)
+		sensorData.cellVoltage[CELL3] = battery[CELL3].getVoltage();
+	// Barometer
 	sensorData.pressure = baro.getPressure(MS561101BA_OSR_4096);
-	sensorData.height = getAltitude(sensorData.pressure, sensorData.temperature);
+	sensorData.height = getAltitude(sensorData.pressure);
+}
+
+void initSensorValues(sensordata &sensorData, MS561101BA &baro) {
+	// Barometer
+	sensorData.temperature = baro.getTemperature(MS561101BA_OSR_4096);
+	// Delay readings, barometer
+	delay(100);
+	sensorData.pressure = baro.getPressure(MS561101BA_OSR_4096);
+	// Init reference for altitude measurement
+	initAltitudeMeasurement(sensorData.pressure, sensorData.temperature);
+}
+
+void initAltitudeMeasurement(float ref_pres, float ref_temp) {
+	sensordata.alt.c1 = (sensordata.alt.dryAirGasConst / sensordata.alt.gravAcc) * ref_temp;
+	sensordata.alt.c2 = log(ref_pres);
 }
