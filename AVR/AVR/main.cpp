@@ -13,7 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
-#define MOVAVG_SIZE 256
+#define MOVAVG_SIZE 32
 
 float movavg_buff[MOVAVG_SIZE];
 int movavg_i = 0;
@@ -165,7 +165,15 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 float getAltitude(float press, float temp) {
 	//return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
 	//return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
-	return ((pow((sea_press / press), 0.1901697808) - 1.0) * (temp + 273.15)) / 0.0065;
+	//return ((pow((sea_press / press), 0.1901697808) - 1.0) * (temp + 273.15)) / 0.0065;
+	static float Tb;
+	Tb = 273.15 + (15.0 + temp) / 2.0;
+	static float R = 8.32432;
+	static float M = 0.0289644;
+	static float g0 = 9.82327;
+	static float Lb = -0.0065;
+		
+	return ((pow((sea_press / press), -(R*Lb)/(g0*M)) - 1.0) * Tb) / -Lb;
 }
 
 void pushAvg(float val) {
@@ -179,4 +187,3 @@ float getAvg(float * buff, int size) {
 	sum += buff[i];
 	return sum / size;
 }
-
