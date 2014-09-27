@@ -15,4 +15,4 @@ fi
 #avrdude -C avrdude.conf -c gpio -p m128 -e 
 
 #Fuses according to http://www.engbedded.com/fusecalc/
-avrdude -C avrdude.conf -c gpio -p m128 -U flash:w:$1:i lfuse:w:0xff:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
+avrdude -C avrdude.conf -c gpio -b115200 -p m128 -V -U flash:w:$1:i lfuse:w:0xff:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
