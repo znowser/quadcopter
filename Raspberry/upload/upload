@@ -11,7 +11,8 @@ fi
 #avrdude -C/etc/avrdude.conf -patmega328p -carduino -P/dev/ttyAMA0 -b115200 -D -Uflash:w:$1:i
 
 
-#erase  avr memory
+#erase  avr memory, is always done when reprogramming
 #avrdude -C avrdude.conf -c gpio -p m128 -e 
 
-avrdude -C avrdude.conf -c gpio -p m128 -D -Uflash:w:$1:i
+#Fuses according to http://www.engbedded.com/fusecalc/
+avrdude -C avrdude.conf -c gpio -p m128 -U flash:w:$1:i lfuse:w:0xff:m -U hfuse:w:0xd9:m -U efuse:w:0xff:m
