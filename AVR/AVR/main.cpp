@@ -37,14 +37,12 @@ int main(void)
 	MS561101BA baro = MS561101BA(MS561101BA_ADDR_CSB_LOW);
 	//*==========Init Motors=============*/
 	//Hardware mapping of motors
-	/*
 	motor[LF].init(13);
 	motor[RF].init(14);
 	motor[LB].init(15);
 	motor[RB].init(16);
 	//minimum wait time for arming
 	delay(8000);
-	*/
 	/*==================================*/
 	//Hardware mapping of battery cells
 	battery[CELL1].init(ADC0);

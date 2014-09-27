@@ -282,8 +282,8 @@
   <ItemGroup>
     <Folder Include="lib" />
     <Folder Include="lib\Arduino\" />
-    <Folder Include="lib\Wire" />
     <Folder Include="lib\Servo\" />
+    <Folder Include="lib\Wire" />
     <Folder Include="Motor" />
     <Folder Include="cellVoltage" />
     <Folder Include="FreeIMU" />

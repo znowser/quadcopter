@@ -10,7 +10,7 @@ CellVoltage::CellVoltage(int pin): pin(pin){
 }
 
 //return voltage in percentage for the cell
-float CellVoltage::getVoltage(){
-  return (analogRead(pin)/255.f)*VREF;
+byte CellVoltage::getVoltage(){
+  return analogRead(pin);//(analogRead(pin)/255.f)*VREF;
 }
 
