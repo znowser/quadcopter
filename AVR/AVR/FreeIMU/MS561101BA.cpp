@@ -46,7 +46,7 @@ MS561101BA::MS561101BA(uint8_t address) {
 
 void MS561101BA::init(uint8_t address) {  
   _addr =  address;
-  lastPresConv = lastTempConv;
+  lastPresConv = lastTempConv = 0;
   
   // disable internal pullups of the ATMEGA which Wire enable by default
   #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)

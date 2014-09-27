@@ -21,6 +21,8 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 void initRefTemp(sensordata &sensor, MS561101BA &baro);
 void initRefPressure(sensordata &sensor, MS561101BA &baro);
 
+#define MOVAVG_SIZE 32
+
 int main(void)
 {
 	//initial all pins according to arduino standard
