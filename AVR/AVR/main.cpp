@@ -14,10 +14,10 @@
 #include "HoverRegulator/Hover.h"
 
 const bool regulator_activated = true;
-float getAltitude(sensordata &sensor, float press);
+float getAltitude(sensordata &sensor);
 void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 void initSensorValues(sensordata &sensor, MS561101BA &baro);
-void initAltitudeMeasurement(sensordata &sensor, float ref_pres, float ref_temp);
+void initAltitudeMeasurement(sensordata &sensor);
 
 int main(void)
 {
@@ -58,13 +58,17 @@ int main(void)
 	float refVal[6] = { 0, 0, 1.0, 0, 0, 0 };
 	Hover regulator(motor, &sensor, refVal);
 	initSensorValues(sensor, baro);
-	static byte printAltInterval = 0;
+	
+	static int printAltInterval = 32766;
+
+	Serial1.println("Before while(true){...}");
+
     while(true){
 		//check if there is new sensordata to recieve from the sensor card
 		//if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
 		//	//update sensor struct
 			updateSensorValues(sensor, motor, battery, baro, ypr);
-			if (!(++printAltInterval % 8))
+			if (!(++printAltInterval % 2048))
 				Serial1.println(sensor.height);
 		/*
 			Serial1.print("Battery level: ");
@@ -130,25 +134,27 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 		sensor.cellVoltage[CELL3] = battery[CELL3].getVoltage();
 	// Barometer
 	sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
-	sensor.height = getAltitude(sensor, sensor.pressure);
+	sensor.height = getAltitude(sensor);
 }
 
-float getAltitude(sensordata &sensor, float pressure) {
-	return sensor.alt.c1*(sensor.alt.c2 - log(pressure));
+float getAltitude(sensordata &sensor) {
+	return sensor.alt.c1*(sensor.alt.c2 - log(sensor.pressure));
 }
 
 void initSensorValues(sensordata &sensor, MS561101BA &baro) {
+	Serial1.println("Init barometer values");
 	// Barometer
-	sensor.temperature = baro.getTemperature(MS561101BA_OSR_4096);
-	// Delay readings, barometer
-	delay(100);
 	sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
-	// Init reference for altitude measurement
-	initAltitudeMeasurement(sensor, sensor.pressure, sensor.temperature);
+	// Delay readings, barometer
+	delay(1000);
+	sensor.temperature = baro.getTemperature(MS561101BA_OSR_4096);
+	initAltitudeMeasurement(sensor);
 }
 
-void initAltitudeMeasurement(sensordata &sensor, float ref_pres, float ref_temp) {
-	sensor.alt.c1 = (sensor.alt.dryAirGasConst / sensor.alt.gravAcc) * ref_temp;
-	sensor.alt.c2 = log(ref_pres);
+void initAltitudeMeasurement(sensordata &sensor) {
+	Serial1.println("Init altitude measurement");
+	Serial1.println(sensor.pressure);
+	Serial1.println(sensor.temperature);
+	sensor.alt.c1 = (sensor.alt.dryAirGasConst / sensor.alt.gravAcc) * sensor.temperature;
+	sensor.alt.c2 = log(sensor.pressure);
 }
-
