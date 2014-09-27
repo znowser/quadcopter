@@ -134,36 +134,6 @@
     <OutputType>Executable</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FreeIMU\helper_3dmath.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\I2Cdev.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\I2Cdev.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MPU6050.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MPU6050.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MPU6050Abstraction.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MPU6050Abstraction.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MPU6050_6Axis_MotionApps20.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MS561101BA.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="FreeIMU\MS561101BA.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="lib\Arduino\Arduino.h">
       <SubType>compile</SubType>
     </Compile>
@@ -263,7 +233,6 @@
     <Folder Include="lib\Arduino\" />
     <Folder Include="lib\Wire" />
     <Folder Include="lib\Servo\" />
-    <Folder Include="FreeIMU" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
