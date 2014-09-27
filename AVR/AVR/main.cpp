@@ -13,7 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
-#define BAROMETER_DELAY 500
+#define BAROMETER_DELAY 600
 
 const bool regulator_activated = true;
 float getAltitude(sensordata &sensor);
@@ -71,21 +71,6 @@ int main(void)
 	initRefPressure(sensor, baro);
 	Serial1.print("c2: ");
 	Serial1.println(sensor.alt.c2);
-	initRefPressure(sensor, baro);
-	Serial1.print("temp: ");
-	Serial1.println(sensor.temperature);
-	initRefPressure(sensor, baro);
-	Serial1.print("c2: ");
-	Serial1.println(sensor.alt.c2);
-	initRefPressure(sensor, baro);
-	Serial1.print("c2: ");
-	Serial1.println(sensor.alt.c2);
-	initRefPressure(sensor, baro);
-	Serial1.print("c2: ");
-	Serial1.println(sensor.alt.c2);
-	initRefTemp(sensor, baro);
-	Serial1.print("temp: ");
-	Serial1.println(sensor.temperature);
 	static int printAltInterval = 32766;
 
 	Serial1.println("Before while(true){...}");
@@ -99,17 +84,14 @@ int main(void)
 		//if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
 		//	//update sensor struct
 			updateSensorValues(sensor, motor, battery, baro, ypr);
-			if (!(++printAltInterval % 4096)) {				
-				Serial1.println(cur = baro.getPressure(MS561101BA_OSR_4096));
-				if (cur > max) {
-					max = cur;
-					Serial1.print("Max: ");
-					Serial1.println(cur);
-				} else if (cur < min) {
-					min = cur;
-					Serial1.print("Min: ");
-					Serial1.println(cur);
-				}				
+			if (!(++printAltInterval % 256)) {
+				Serial1.print("Relative altitude: ");
+				Serial1.println(sensor.height);
+			}
+			if (!(printAltInterval % 2048)) {
+				delay(10);
+				Serial1.print("Current temperature: ");
+				Serial1.println(baro.getTemperature(MS561101BA_OSR_4096));
 			}
 //				Serial1.println(sensor.height);
 		/*
@@ -156,6 +138,8 @@ int main(void)
 
 void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]) {
 	static byte batInterval = 255;
+	static float pArray[32] = {0};
+	static byte pCounter = 31;
 	// Battery Cell 1
 	if (!++batInterval)
 		sensor.cellVoltage[CELL1] = battery[CELL1].getVoltage();
@@ -174,9 +158,14 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 	// Battery Cell 3
 	if (!batInterval)
 		sensor.cellVoltage[CELL3] = battery[CELL3].getVoltage();
-	// Barometer
-	//sensor.pressure = baro.rawPressure(MS561101BA_OSR_4096);
-	sensor.rawPressure = baro.rawPressure(MS561101BA_OSR_4096);
+	// Barometer		
+	delay(10);
+	pArray[pCounter = ++pCounter % 32] = baro.getPressure(MS561101BA_OSR_4096);
+	double sum = 0;
+	int i = 0;
+	for (i = 0; i < 32; ++i)
+		sum += pArray[i];
+	sensor.pressure = sum / 3.2;
 	sensor.height = getAltitude(sensor);
 }
 
@@ -185,14 +174,56 @@ float getAltitude(sensordata &sensor) {
 }
 
 void initRefTemp(sensordata &sensor, MS561101BA &baro) {
-	delay(BAROMETER_DELAY);
-	sensor.temperature = baro.getTemperature(MS561101BA_OSR_4096);	
+	delay(20);
+	baro.getTemperature(MS561101BA_OSR_4096);
+	delay(20);
+	baro.getPressure(MS561101BA_OSR_4096);
+	delay(20);
+	baro.getTemperature(MS561101BA_OSR_4096);
+	delay(20);
+	baro.getPressure(MS561101BA_OSR_4096);
+	int i = 0;
+	double sum = 0;
+	for (i = 0; i < 64; ++i) {
+		delay(20);
+		baro.getTemperature(MS561101BA_OSR_4096);
+	}
+	for (i = 0; i < 64; ++i) {
+		delay(20);
+		baro.getPressure(MS561101BA_OSR_4096);
+	}
+	for (i = 0; i < 64; ++i) {
+		delay(20);
+		sum += baro.getTemperature(MS561101BA_OSR_4096);
+	}
+	sensor.temperature = sum / 64.0;
 	sensor.alt.c1 = (sensor.alt.dryAirGasConst / sensor.alt.gravAcc) * sensor.temperature;
 }
 
 void initRefPressure(sensordata &sensor, MS561101BA &baro) {
-	delay(BAROMETER_DELAY);
-	//sensor.pressure = baro.getPressure(MS561101BA_OSR_4096);
-	sensor.rawPressure = baro.rawPressure(MS561101BA_OSR_4096);
-	sensor.alt.c2 = log(sensor.rawPressure / 100);
+	delay(20);
+	baro.getPressure(MS561101BA_OSR_4096);
+	delay(20);
+	baro.getTemperature(MS561101BA_OSR_4096);
+	delay(20);
+	baro.getPressure(MS561101BA_OSR_4096);
+	delay(20);
+	baro.getTemperature(MS561101BA_OSR_4096);
+	int i = 0;
+	double sum = 0;
+	for (i = 0; i < 64; ++i) {
+		delay(20);
+		baro.getPressure(MS561101BA_OSR_4096);
+	}
+	for (i = 0; i < 64; ++i) {
+		delay(20);
+		baro.getTemperature(MS561101BA_OSR_4096);
+	}
+	for (i = 0; i < 64; ++i) {
+		delay(20);
+		sum += baro.getPressure(MS561101BA_OSR_4096);
+	}
+	sensor.pressure = sum / 6.4;
+	sensor.alt.c2 = log(sensor.pressure);
 }
+
