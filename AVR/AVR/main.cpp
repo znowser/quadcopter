@@ -61,7 +61,7 @@ int main(void)
 	static byte printAltInterval = 0;
     while(true){
 		//check if there is new sensordata to recieve from the sensor card
-		if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
+		//if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
 		//	//update sensor struct
 			updateSensorValues(sensor, motor, battery, baro, ypr);
 			if (!(++printAltInterval % 8))
@@ -90,7 +90,7 @@ int main(void)
 		*/
 		//  if (regulator_activated)
 		//	regulator.Regulate();
-        }
+       // }
 		
 		/*
 		motor[LF].setSpeed(speed);
@@ -104,8 +104,7 @@ int main(void)
 			dir = !dir;
 		
 		dir?++speed:--speed;
-		*/		
-		delay(100);
+		*/
     }
 }
 
