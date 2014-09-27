@@ -5,3 +5,17 @@ Known design-issues
 * Reset from pushbutton missing pulldown resistor.
 * The connector to the raspberry is rotated in the wrong directory.
 * It would be nice to have a led indicating reset of the AVR.
+* Power connection to the Raspberry pi missing.
+* 3V3 to the voltage converted should be taken from the raspberry instead of from the sensorcard.
+* It would be nice to have a ISP connector direct to the AVR for programming without any peripheral components.
+* It would be nice to support JTAG.
+* The voltage converter outputs 5V where it should output 3V3.
+* The PWM signal to Motor1 is connected to the wrong AVR-pin (should be PB7 instead of PB3).
+
+
+Next version improvements
+
+* New MPU: ATxmega128A4U, smaller, operates @ 32MHz, 3.6V
+* 3V3 voltage regulator.
+* only 3v3 on the whole card, no need for voltage dividers between avr-sensorcard and avr-rasp.
+* may be an issue when interfacing with the speedcontrollers with only 3v3.
