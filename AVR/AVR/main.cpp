@@ -13,7 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
-#define MOVAVG_SIZE 256
+#define MOVAVG_SIZE 32
 
 float movavg_buff[MOVAVG_SIZE];
 int movavg_i = 0;
@@ -40,7 +40,6 @@ int main(void)
 	/*==========Init Sensors============*/
 	//init gyro and magnetic field
 	//MPUAbstraction mpu = MPUAbstraction();
-	Wire.begin();
 	//barometer and temperature
 	MS561101BA baro = MS561101BA(MS561101BA_ADDR_CSB_LOW);
 	//*==========Init Motors=============*/

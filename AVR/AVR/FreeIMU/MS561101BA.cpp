@@ -60,11 +60,12 @@ void MS561101BA::init(uint8_t address) {
     cbi(PORTD, 0);
     cbi(PORTD, 1);
   #endif
- 
-  reset(); // reset the device to populate its internal PROM registers
-  delay(1000); // some safety time
-  readPROM(); // reads the PROM into object variables for later use
-  delay(1000);
+
+	Wire.begin(); 
+	reset(); // reset the device to populate its internal PROM registers
+	delay(1000); // some safety time
+	readPROM(); // reads the PROM into object variables for later use
+	delay(1000);
 }
 
 float MS561101BA::getPressure(uint8_t OSR) {
