@@ -13,15 +13,18 @@
 #include "FreeIMU/MS561101BA.h"
 #include "HoverRegulator/Hover.h"
 
-#define BAROMETER_DELAY 600
+#define MOVAVG_SIZE 32
+
+float movavg_buff[MOVAVG_SIZE];
+int movavg_i = 0;
+const float sea_press = 1013.25;
+float press, temperature;
+float getAltitude(float press, float temp);
+void pushAvg(float val);
+float getAvg(float *buff, int size);
 
 const bool regulator_activated = true;
-float getAltitude(sensordata &sensor);
 void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
-void initRefTemp(sensordata &sensor, MS561101BA &baro);
-void initRefPressure(sensordata &sensor, MS561101BA &baro);
-
-#define MOVAVG_SIZE 32
 
 int main(void)
 {
@@ -65,34 +68,33 @@ int main(void)
 	float refVal[6] = { 0, 0, 1.0, 0, 0, 0 };
 	Hover regulator(motor, &sensor, refVal);
 	delay(1500);
-	initRefTemp(sensor, baro);
-	Serial1.print("temp: ");
-	Serial1.println(sensor.temperature);
-	initRefPressure(sensor, baro);
-	Serial1.print("c2: ");
-	Serial1.println(sensor.alt.c2);
-	static int printAltInterval = 32766;
-
-	Serial1.println("Before while(true){...}");
-
-	float min = 99999;
-	float max = 0;
-	float cur = 0;
-
+	
+	// populate movavg_buff before starting loop
+	for(int i=0; i<MOVAVG_SIZE; i++) {
+		movavg_buff[i] = baro.getPressure(MS561101BA_OSR_4096);
+	}
+	
+	int cnt = 0;
+	
     while(true){
 		//check if there is new sensordata to recieve from the sensor card
 		//if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
 		//	//update sensor struct
-			updateSensorValues(sensor, motor, battery, baro, ypr);
-			if (!(++printAltInterval % 256)) {
-				Serial1.print("Relative altitude: ");
-				Serial1.println(sensor.height);
-			}
-			if (!(printAltInterval % 2048)) {
-				delay(10);
-				Serial1.print("Current temperature: ");
-				Serial1.println(baro.getTemperature(MS561101BA_OSR_4096));
-			}
+		
+		temperature = baro.getTemperature(MS561101BA_OSR_4096);
+		//Serial1.print(temperature);
+		//Serial1.print(" degC pres: ");
+		
+		press = baro.getPressure(MS561101BA_OSR_4096);
+		pushAvg(press);
+		press = getAvg(movavg_buff, MOVAVG_SIZE);
+		//Serial1.print(press);
+		//Serial1.print(" mbar altitude: ");
+		if (!(++cnt % 256))
+			Serial1.println(getAltitude(press, temperature));
+		
+		updateSensorValues(sensor, motor, battery, baro, ypr);
+		
 //				Serial1.println(sensor.height);
 		/*
 			Serial1.print("Battery level: ");
@@ -138,15 +140,15 @@ int main(void)
 
 void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]) {
 	static byte batInterval = 255;
-	static float pArray[32] = {0};
-	static byte pCounter = 31;
 	// Battery Cell 1
 	if (!++batInterval)
 		sensor.cellVoltage[CELL1] = battery[CELL1].getVoltage();
 	// Gyro
+	/*
 	sensor.gyro[2] = ypr[0];
 	sensor.gyro[1] = ypr[1];
 	sensor.gyro[0] = ypr[2];
+	*/
 	// Battery Cell 2
 	if (!batInterval)
 		sensor.cellVoltage[CELL2] = battery[CELL2].getVoltage();	
@@ -158,72 +160,23 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 	// Battery Cell 3
 	if (!batInterval)
 		sensor.cellVoltage[CELL3] = battery[CELL3].getVoltage();
-	// Barometer		
-	delay(10);
-	pArray[pCounter = ++pCounter % 32] = baro.getPressure(MS561101BA_OSR_4096);
-	double sum = 0;
-	int i = 0;
-	for (i = 0; i < 32; ++i)
-		sum += pArray[i];
-	sensor.pressure = sum / 3.2;
-	sensor.height = getAltitude(sensor);
 }
 
-float getAltitude(sensordata &sensor) {
-	return sensor.alt.c1 * (sensor.alt.c2 - log(sensor.pressure));
+float getAltitude(float press, float temp) {
+	//return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
+	return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+	return ((pow((sea_press / press), 0.1901697808) - 1.0) * (temp + 273.15)) / 0.0065;
 }
 
-void initRefTemp(sensordata &sensor, MS561101BA &baro) {
-	delay(20);
-	baro.getTemperature(MS561101BA_OSR_4096);
-	delay(20);
-	baro.getPressure(MS561101BA_OSR_4096);
-	delay(20);
-	baro.getTemperature(MS561101BA_OSR_4096);
-	delay(20);
-	baro.getPressure(MS561101BA_OSR_4096);
-	int i = 0;
-	double sum = 0;
-	for (i = 0; i < 64; ++i) {
-		delay(20);
-		baro.getTemperature(MS561101BA_OSR_4096);
-	}
-	for (i = 0; i < 64; ++i) {
-		delay(20);
-		baro.getPressure(MS561101BA_OSR_4096);
-	}
-	for (i = 0; i < 64; ++i) {
-		delay(20);
-		sum += baro.getTemperature(MS561101BA_OSR_4096);
-	}
-	sensor.temperature = sum / 64.0;
-	sensor.alt.c1 = (sensor.alt.dryAirGasConst / sensor.alt.gravAcc) * sensor.temperature;
+void pushAvg(float val) {
+	movavg_buff[movavg_i] = val;
+	movavg_i = (movavg_i + 1) % MOVAVG_SIZE;
 }
 
-void initRefPressure(sensordata &sensor, MS561101BA &baro) {
-	delay(20);
-	baro.getPressure(MS561101BA_OSR_4096);
-	delay(20);
-	baro.getTemperature(MS561101BA_OSR_4096);
-	delay(20);
-	baro.getPressure(MS561101BA_OSR_4096);
-	delay(20);
-	baro.getTemperature(MS561101BA_OSR_4096);
-	int i = 0;
-	double sum = 0;
-	for (i = 0; i < 64; ++i) {
-		delay(20);
-		baro.getPressure(MS561101BA_OSR_4096);
-	}
-	for (i = 0; i < 64; ++i) {
-		delay(20);
-		baro.getTemperature(MS561101BA_OSR_4096);
-	}
-	for (i = 0; i < 64; ++i) {
-		delay(20);
-		sum += baro.getPressure(MS561101BA_OSR_4096);
-	}
-	sensor.pressure = sum / 6.4;
-	sensor.alt.c2 = log(sensor.pressure);
+float getAvg(float * buff, int size) {
+	float sum = 0.0;
+	for(int i = 0; i<size; i++)
+	sum += buff[i];
+	return sum / size;
 }
 
