@@ -76,7 +76,7 @@ class MS561101BA {
     void reset();
     uint32_t lastPresConv, lastTempConv;
   private:
-    void init(uint8_t addr);
+	void init(uint8_t addr);
     void startConversion(uint8_t command);
     uint32_t getConversion(uint8_t command);
     uint8_t _addr;

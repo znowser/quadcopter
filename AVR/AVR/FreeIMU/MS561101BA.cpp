@@ -39,7 +39,6 @@ void printLongLong(uint64_t n, uint8_t base) {
 }
 */
 
-
 MS561101BA::MS561101BA(uint8_t address) {
   init(address);
 }
