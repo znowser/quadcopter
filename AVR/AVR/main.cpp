@@ -32,7 +32,8 @@ int main(void)
 	float ypr[3];
 	/*==========Init Sensors============*/
 	//init gyro and magnetic field
-	MPUAbstraction mpu = MPUAbstraction();
+	//MPUAbstraction mpu = MPUAbstraction();
+	Wire.begin();
 	//barometer and temperature
 	MS561101BA baro = MS561101BA(MS561101BA_ADDR_CSB_LOW);
 	//*==========Init Motors=============*/
