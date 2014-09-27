@@ -37,9 +37,6 @@ void MPUAbstraction::MPUInt(){
 bool MPUAbstraction::readYawPitchRoll(float ypr[3], int16_t acc[3]){
   // if programming failed or there is no data available, don't try to do anything
   if (mpuDataReady == false || (devStatus != 0)) return false;
-
-  //switch to master-mode on the i2c
-  //Wire.begin();
   
   //reset interrupt-flag
   mpuDataReady = false;
