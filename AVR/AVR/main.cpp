@@ -144,11 +144,11 @@ void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[
 	if (!++batInterval)
 		sensor.cellVoltage[CELL1] = battery[CELL1].getVoltage();
 	// Gyro
-	/*
+	
 	sensor.gyro[2] = ypr[0];
 	sensor.gyro[1] = ypr[1];
 	sensor.gyro[0] = ypr[2];
-	*/
+	
 	// Battery Cell 2
 	if (!batInterval)
 		sensor.cellVoltage[CELL2] = battery[CELL2].getVoltage();	

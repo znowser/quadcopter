@@ -52,24 +52,25 @@ struct constants {
 };
 
 struct sensordata {
-  /*Angles*/
-  int motorSpeed[4];
-  int cellVoltage[3];
-  int16_t acc[3];
-  int16_t gyro[3];
-  /*
-  int angleYaw;
-  int anglePitch;
-  int angleRoll;
-  Accelerations
-  VectorInt16 acc;
-  */
-  float temperature;
-  float pressure;
-  int32_t rawPressure;
-  float height;
-  ps3Controller ps3;
-  constants alt;
+	/*Angles*/
+	int motorSpeed[4];
+	int cellVoltage[3];
+	int16_t acc[3];
+	//int16_t gyro[3];
+	float gyro[3];
+	/*
+	int angleYaw;
+	int anglePitch;
+	int angleRoll;
+	Accelerations
+	VectorInt16 acc;
+	*/
+	float temperature;
+	float pressure;
+	int32_t rawPressure;
+	float height;
+	ps3Controller ps3;
+	constants alt;
 };
 
 #endif
