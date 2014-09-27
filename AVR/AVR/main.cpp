@@ -8,20 +8,19 @@
 #include "lib/Arduino/Arduino.h"
 #include "FreeIMU/MS561101BA.h"
 
-
+/*
 #define MOVAVG_SIZE 32
 
 float movavg_buff[MOVAVG_SIZE];
-int movavg_i=0;
-
+int movavg_i = 0;
 const float sea_press = 1013.25;
 float press, temperature;
 
 float getAltitude(float press, float temp);
 void pushAvg(float val);
-float getAvg(float * buff, int size);
+float getAvg(float *buff, int size);*/
 int main(void) {
-//	Wire.begin();
+	Wire.begin();
 	Serial1.begin(115200);
 	//delay(1000);
 
@@ -38,6 +37,7 @@ int main(void) {
 	
 	while(true){
 		Serial1.print(" temp: ");
+		delay(100);
 		/*temperature = baro.getTemperature(MS561101BA_OSR_4096);
 		Serial1.print(temperature);
 		Serial1.print(" degC pres: ");
@@ -53,7 +53,7 @@ int main(void) {
 	}
 }
 
-
+/*
 float getAltitude(float press, float temp) {
 	//return (1.0f - pow(press/101325.0f, 0.190295f)) * 4433000.0f;
 	return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
@@ -66,9 +66,9 @@ void pushAvg(float val) {
 
 float getAvg(float * buff, int size) {
 	float sum = 0.0;
-	for(int i=0; i<size; i++) {
+	for(int i = 0; i<size; i++)
 		sum += buff[i];
-	}
 	return sum / size;
 }
 
+*/

@@ -9,7 +9,7 @@ MPUAbstraction::MPUAbstraction(){
 }
 
 void MPUAbstraction::init(){ 
-  Wire.begin();
+  //Wire.begin(); // <-- !! outcommented by Ramboerik to support fastwire insead 2014-09-27!!
   // set 400kHz mode @ 16MHz CPU or 200kHz mode @ 8MHz CPU
   // quadruple i2c buss speed to aviod FIFO-overflow from the sensorcard.
   //source : http://www.i2cdevlib.com/forums/topic/27-fifo-overflow/ 
