@@ -71,6 +71,8 @@ int main(void)
 	// populate movavg_buff before starting loop
 	for(int i=0; i<MOVAVG_SIZE; i++) {
 		movavg_buff[i] = baro.getPressure(MS561101BA_OSR_4096);
+		//10ms is the maximum time it take to obtain a new value from the sensor
+		delay(10);
 	}
 	
 	int cnt = 0;
@@ -87,12 +89,20 @@ int main(void)
 		press = baro.getPressure(MS561101BA_OSR_4096);
 		pushAvg(press);
 		press = getAvg(movavg_buff, MOVAVG_SIZE);
+		
+		
+		Serial1.print(temperature);
+		Serial1.print(" ");
+		Serial1.print(press);
+		Serial1.print(" ");
+		Serial1.println(getAltitude(press, temperature));
+		
 		//Serial1.print(press);
 		//Serial1.print(" mbar altitude: ");
-		if (!(++cnt % 128))
-			Serial1.println(getAltitude(press, temperature));
+		//if (!(++cnt % 128))
+		//	Serial1.println(getAltitude(press, temperature));
 		
-		updateSensorValues(sensor, motor, battery, baro, ypr);
+		//updateSensorValues(sensor, motor, battery, baro, ypr);
 		
 //				Serial1.println(sensor.height);
 		/*
