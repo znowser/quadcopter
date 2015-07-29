@@ -64,7 +64,7 @@ void MPU6050::initialize() {
     setClockSource(MPU6050_CLOCK_PLL_XGYRO);
     setFullScaleGyroRange(MPU6050_GYRO_FS_250);
     setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-    setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
+    setSleepEnabled(FALSE); // thanks to Jack Elston for pointing this one out!
 }
 
 /** Verify the I2C connection.
@@ -251,6 +251,64 @@ uint8_t MPU6050::getFullScaleGyroRange() {
  */
 void MPU6050::setFullScaleGyroRange(uint8_t range) {
     I2Cdev::writeBits(devAddr, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, range);
+}
+
+// SELF TEST FACTORY TRIM VALUES
+
+/** Get self-test factory trim value for accelerometer X axis.
+ * @return factory trim value
+ * @see MPU6050_RA_SELF_TEST_X
+ */
+uint8_t MPU6050::getAccelXSelfTestFactoryTrim() {
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_X, &buffer[0]);
+	I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_A, &buffer[1]);	
+    return (buffer[0]>>3) | ((buffer[1]>>4) & 0x03);
+}
+
+/** Get self-test factory trim value for accelerometer Y axis.
+ * @return factory trim value
+ * @see MPU6050_RA_SELF_TEST_Y
+ */
+uint8_t MPU6050::getAccelYSelfTestFactoryTrim() {
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Y, &buffer[0]);
+	I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_A, &buffer[1]);	
+    return (buffer[0]>>3) | ((buffer[1]>>2) & 0x03);
+}
+
+/** Get self-test factory trim value for accelerometer Z axis.
+ * @return factory trim value
+ * @see MPU6050_RA_SELF_TEST_Z
+ */
+uint8_t MPU6050::getAccelZSelfTestFactoryTrim() {
+    I2Cdev::readBytes(devAddr, MPU6050_RA_SELF_TEST_Z, 2, buffer);	
+    return (buffer[0]>>3) | (buffer[1] & 0x03);
+}
+
+/** Get self-test factory trim value for gyro X axis.
+ * @return factory trim value
+ * @see MPU6050_RA_SELF_TEST_X
+ */
+uint8_t MPU6050::getGyroXSelfTestFactoryTrim() {
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_X, buffer);	
+    return (buffer[0] & 0x1F);
+}
+
+/** Get self-test factory trim value for gyro Y axis.
+ * @return factory trim value
+ * @see MPU6050_RA_SELF_TEST_Y
+ */
+uint8_t MPU6050::getGyroYSelfTestFactoryTrim() {
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Y, buffer);	
+    return (buffer[0] & 0x1F);
+}
+
+/** Get self-test factory trim value for gyro Z axis.
+ * @return factory trim value
+ * @see MPU6050_RA_SELF_TEST_Z
+ */
+uint8_t MPU6050::getGyroZSelfTestFactoryTrim() {
+    I2Cdev::readByte(devAddr, MPU6050_RA_SELF_TEST_Z, buffer);	
+    return (buffer[0] & 0x1F);
 }
 
 // ACCEL_CONFIG register
@@ -464,7 +522,7 @@ uint8_t MPU6050::getMotionDetectionThreshold() {
     I2Cdev::readByte(devAddr, MPU6050_RA_MOT_THR, buffer);
     return buffer[0];
 }
-/** Set free-fall event acceleration threshold.
+/** Set motion detection event acceleration threshold.
  * @param threshold New motion detection acceleration threshold value (LSB = 2mg)
  * @see getMotionDetectionThreshold()
  * @see MPU6050_RA_MOT_THR
@@ -1714,11 +1772,11 @@ bool MPU6050::getIntDataReadyStatus() {
  * @see getAcceleration()
  * @see getRotation()
  * @see MPU6050_RA_ACCEL_XOUT_H
- *//*
+ */
 void MPU6050::getMotion9(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* mx, int16_t* my, int16_t* mz) {
     getMotion6(ax, ay, az, gx, gy, gz);
     // TODO: magnetometer integration
-}*/
+}
 /** Get raw 6-axis motion sensor readings (accel/gyro).
  * Retrieves all currently available motion sensor values.
  * @param ax 16-bit signed integer container for accelerometer X-axis value
@@ -1752,7 +1810,7 @@ void MPU6050::getMotion6(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int
  *
  * The data within the accelerometer sensors' internal register set is always
  * updated at the Sample Rate. Meanwhile, the user-facing read register set
- * duplicates the internal register set's data values whenever the serial
+ * duplicates the internal register set's data values whenever the Serial1
  * interface is idle. This guarantees that a burst read of sensor registers will
  * read measurements from the same sampling instant. Note that if burst reads
  * are not used, the user is responsible for ensuring a set of single byte reads
@@ -1830,7 +1888,7 @@ int16_t MPU6050::getTemperature() {
  * set and a user-facing read register set.
  * The data within the gyroscope sensors' internal register set is always
  * updated at the Sample Rate. Meanwhile, the user-facing read register set
- * duplicates the internal register set's data values whenever the serial
+ * duplicates the internal register set's data values whenever the Serial1
  * interface is idle. This guarantees that a burst read of sensor registers will
  * read measurements from the same sampling instant. Note that if burst reads
  * are not used, the user is responsible for ensuring a set of single byte reads
@@ -1906,7 +1964,7 @@ int16_t MPU6050::getRotationZ() {
  * and a user-facing read register set.
  *
  * The data within the external sensors' internal register set is always updated
- * at the Sample Rate (or the reduced access rate) whenever the serial interface
+ * at the Sample Rate (or the reduced access rate) whenever the Serial1 interface
  * is idle. This guarantees that a burst read of sensor registers will read
  * measurements from the same sampling instant. Note that if burst reads are not
  * used, the user is responsible for ensuring a set of single byte reads
@@ -1990,6 +2048,14 @@ uint32_t MPU6050::getExternalSensorDWord(int position) {
 
 // MOT_DETECT_STATUS register
 
+/** Get full motion detection status register content (all bits).
+ * @return Motion detection status byte
+ * @see MPU6050_RA_MOT_DETECT_STATUS
+ */
+uint8_t MPU6050::getMotionStatus() {
+    I2Cdev::readByte(devAddr, MPU6050_RA_MOT_DETECT_STATUS, buffer);
+    return buffer[0];
+}
 /** Get X-axis negative motion detection interrupt status.
  * @return Motion detection status
  * @see MPU6050_RA_MOT_DETECT_STATUS
@@ -2135,7 +2201,7 @@ void MPU6050::setSlaveDelayEnabled(uint8_t num, bool enabled) {
  * @see MPU6050_PATHRESET_GYRO_RESET_BIT
  */
 void MPU6050::resetGyroscopePath() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_SIGNAL_PATH_RESET, MPU6050_PATHRESET_GYRO_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_SIGNAL_PATH_RESET, MPU6050_PATHRESET_GYRO_RESET_BIT, TRUE);
 }
 /** Reset accelerometer signal path.
  * The reset will revert the signal path analog to digital converters and
@@ -2144,7 +2210,7 @@ void MPU6050::resetGyroscopePath() {
  * @see MPU6050_PATHRESET_ACCEL_RESET_BIT
  */
 void MPU6050::resetAccelerometerPath() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_SIGNAL_PATH_RESET, MPU6050_PATHRESET_ACCEL_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_SIGNAL_PATH_RESET, MPU6050_PATHRESET_ACCEL_RESET_BIT, TRUE);
 }
 /** Reset temperature sensor signal path.
  * The reset will revert the signal path analog to digital converters and
@@ -2153,7 +2219,7 @@ void MPU6050::resetAccelerometerPath() {
  * @see MPU6050_PATHRESET_TEMP_RESET_BIT
  */
 void MPU6050::resetTemperaturePath() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_SIGNAL_PATH_RESET, MPU6050_PATHRESET_TEMP_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_SIGNAL_PATH_RESET, MPU6050_PATHRESET_TEMP_RESET_BIT, TRUE);
 }
 
 // MOT_DETECT_CTRL register
@@ -2322,7 +2388,7 @@ void MPU6050::switchSPIEnabled(bool enabled) {
  * @see MPU6050_USERCTRL_FIFO_RESET_BIT
  */
 void MPU6050::resetFIFO() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_FIFO_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_FIFO_RESET_BIT, TRUE);
 }
 /** Reset the I2C Master.
  * This bit resets the I2C Master when set to 1 while I2C_MST_EN equals 0.
@@ -2331,7 +2397,7 @@ void MPU6050::resetFIFO() {
  * @see MPU6050_USERCTRL_I2C_MST_RESET_BIT
  */
 void MPU6050::resetI2CMaster() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_I2C_MST_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_I2C_MST_RESET_BIT, TRUE);
 }
 /** Reset all sensor registers and signal paths.
  * When set to 1, this bit resets the signal paths for all sensors (gyroscopes,
@@ -2346,7 +2412,7 @@ void MPU6050::resetI2CMaster() {
  * @see MPU6050_USERCTRL_SIG_COND_RESET_BIT
  */
 void MPU6050::resetSensors() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_SIG_COND_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_SIG_COND_RESET_BIT, TRUE);
 }
 
 // PWR_MGMT_1 register
@@ -2357,11 +2423,11 @@ void MPU6050::resetSensors() {
  * @see MPU6050_PWR1_DEVICE_RESET_BIT
  */
 void MPU6050::reset() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_DEVICE_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_DEVICE_RESET_BIT, TRUE);
 }
 /** Get sleep mode status.
  * Setting the SLEEP bit in the register puts the device into very low power
- * sleep mode. In this mode, only the serial interface and internal registers
+ * sleep mode. In this mode, only the Serial1 interface and internal registers
  * remain active, allowing for a very low standby current. Clearing this bit
  * puts the device back into normal mode. To save power, the individual standby
  * selections for each of the gyros should be used if any gyro axis is not used
@@ -2675,7 +2741,9 @@ uint8_t MPU6050::getFIFOByte() {
     return buffer[0];
 }
 void MPU6050::getFIFOBytes(uint8_t *data, uint8_t length) {
-    I2Cdev::readBytes(devAddr, MPU6050_RA_FIFO_R_W, length, data);
+	//Added by RamboErik 2015-07-27 to avoid bug
+	if(length != 0)
+		I2Cdev::readBytes(devAddr, MPU6050_RA_FIFO_R_W, length, data);
 }
 /** Write byte to FIFO buffer.
  * @see getFIFOByte()
@@ -2905,7 +2973,7 @@ void MPU6050::setDMPEnabled(bool enabled) {
     I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_DMP_EN_BIT, enabled);
 }
 void MPU6050::resetDMP() {
-    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_DMP_RESET_BIT, true);
+    I2Cdev::writeBit(devAddr, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_DMP_RESET_BIT, TRUE);
 }
 
 // BANK_SEL register
@@ -2968,7 +3036,7 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize, uint8_t b
     setMemoryStartAddress(address);
     uint8_t chunkSize;
     uint8_t *verifyBuffer;
-    uint8_t *progBuffer;
+    uint8_t *progBuffer=0;
     uint16_t i;
     uint8_t j;
     if (verify) verifyBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
@@ -2999,26 +3067,26 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize, uint8_t b
             setMemoryStartAddress(address);
             I2Cdev::readBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, verifyBuffer);
             if (memcmp(progBuffer, verifyBuffer, chunkSize) != 0) {
-                /*Serial.print("Block write verification error, bank ");
-                Serial.print(bank, DEC);
-                Serial.print(", address ");
-                Serial.print(address, DEC);
-                Serial.print("!\nExpected:");
+               /* Serial1.print("Block write verification error, bank ");
+                Serial1.print(bank, DEC);
+                Serial1.print(", address ");
+                Serial1.print(address, DEC);
+                Serial1.print("!\nExpected:");
                 for (j = 0; j < chunkSize; j++) {
-                    Serial.print(" 0x");
-                    if (progBuffer[j] < 16) Serial.print("0");
-                    Serial.print(progBuffer[j], HEX);
+                    Serial1.print(" 0x");
+                    if (progBuffer[j] < 16) Serial1.print("0");
+                    Serial1.print(progBuffer[j], HEX);
                 }
-                Serial.print("\nReceived:");
+                Serial1.print("\nReceived:");
                 for (uint8_t j = 0; j < chunkSize; j++) {
-                    Serial.print(" 0x");
-                    if (verifyBuffer[i + j] < 16) Serial.print("0");
-                    Serial.print(verifyBuffer[i + j], HEX);
+                    Serial1.print(" 0x");
+                    if (verifyBuffer[i + j] < 16) Serial1.print("0");
+                    Serial1.print(verifyBuffer[i + j], HEX);
                 }
-                Serial.print("\n");*/
+                Serial1.print("\n");*/
                 free(verifyBuffer);
                 if (useProgMem) free(progBuffer);
-                return false; // uh oh.
+                return FALSE; // uh oh.
             }
         }
 
@@ -3037,13 +3105,14 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize, uint8_t b
     }
     if (verify) free(verifyBuffer);
     if (useProgMem) free(progBuffer);
-    return true;
+    return TRUE;
 }
 bool MPU6050::writeProgMemoryBlock(const uint8_t *data, uint16_t dataSize, uint8_t bank, uint8_t address, bool verify) {
-    return writeMemoryBlock(data, dataSize, bank, address, verify, true);
+    return writeMemoryBlock(data, dataSize, bank, address, verify, TRUE);
 }
 bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, bool useProgMem) {
-    uint8_t *progBuffer, success, special;
+    uint8_t *progBuffer = 0;
+	uint8_t success, special;
     uint16_t i, j;
     if (useProgMem) {
         progBuffer = (uint8_t *)malloc(8); // assume 8-byte blocks, realloc later if necessary
@@ -3066,19 +3135,19 @@ bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, b
         // write data or perform special action
         if (length > 0) {
             // regular block of data to write
-            /*Serial.print("Writing config block to bank ");
-            Serial.print(bank);
-            Serial.print(", offset ");
-            Serial.print(offset);
-            Serial.print(", length=");
-            Serial.println(length);*/
+            /*Serial1.print("Writing config block to bank ");
+            Serial1.print(bank);
+            Serial1.print(", offset ");
+            Serial1.print(offset);
+            Serial1.print(", length=");
+            Serial1.println(length);*/
             if (useProgMem) {
                 if (sizeof(progBuffer) < length) progBuffer = (uint8_t *)realloc(progBuffer, length);
                 for (j = 0; j < length; j++) progBuffer[j] = pgm_read_byte(data + i + j);
             } else {
                 progBuffer = (uint8_t *)data + i;
             }
-            success = writeMemoryBlock(progBuffer, length, bank, offset, true);
+            success = writeMemoryBlock(progBuffer, length, bank, offset, TRUE);
             i += length;
         } else {
             // special instruction
@@ -3091,9 +3160,9 @@ bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, b
             } else {
                 special = data[i++];
             }
-            /*Serial.print("Special command code ");
-            Serial.print(special, HEX);
-            Serial.println(" found...");*/
+            /*Serial1.print("Special command code ");
+            Serial1.print(special, HEX);
+            Serial1.println(" found...");*/
             if (special == 0x01) {
                 // enable DMP-related interrupts
                 
@@ -3102,23 +3171,23 @@ bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, b
                 //setIntDMPEnabled(true);
                 I2Cdev::writeByte(devAddr, MPU6050_RA_INT_ENABLE, 0x32);  // single operation
 
-                success = true;
+                success = TRUE;
             } else {
                 // unknown special command
-                success = false;
+                success = FALSE;
             }
         }
         
         if (!success) {
             if (useProgMem) free(progBuffer);
-            return false; // uh oh
+            return FALSE; // uh oh
         }
     }
     if (useProgMem) free(progBuffer);
-    return true;
+    return TRUE;
 }
 bool MPU6050::writeProgDMPConfigurationSet(const uint8_t *data, uint16_t dataSize) {
-    return writeDMPConfigurationSet(data, dataSize, true);
+    return writeDMPConfigurationSet(data, dataSize, TRUE);
 }
 
 // DMP_CFG_1 register

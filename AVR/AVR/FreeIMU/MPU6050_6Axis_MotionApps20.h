@@ -100,12 +100,12 @@ THE SOFTWARE.
 // after moving string constants to flash memory storage using the F()
 // compiler macro (Arduino IDE 1.0+ required).
 
-//#define DEBUG
-#ifdef DEBUG
-    #define DEBUG_PRINT(x) Serial.print(x)
-    #define DEBUG_PRINTF(x, y) Serial.print(x, y)
-    #define DEBUG_PRINTLN(x) Serial.println(x)
-    #define DEBUG_PRINTLNF(x, y) Serial.println(x, y)
+//#define DEBUG_TEXT
+#ifdef DEBUG_TEXT
+    #define DEBUG_PRINT(x) Serial1.print(x)
+    #define DEBUG_PRINTF(x, y) Serial1.print(x, y)
+    #define DEBUG_PRINTLN(x) Serial1.println(x)
+    #define DEBUG_PRINTLNF(x, y) Serial1.println(x, y)
 #else
     #define DEBUG_PRINT(x)
     #define DEBUG_PRINTF(x, y)
@@ -302,7 +302,7 @@ const unsigned char dmpConfig[MPU6050_DMP_CONFIG_SIZE] PROGMEM = {
     0x07,   0x46,   0x01,   0x9A,                     // CFG_GYRO_SOURCE inv_send_gyro
     0x07,   0x47,   0x04,   0xF1, 0x28, 0x30, 0x38,   // CFG_9 inv_send_gyro -> inv_construct3_fifo
     0x07,   0x6C,   0x04,   0xF1, 0x28, 0x30, 0x38,   // CFG_12 inv_send_accel -> inv_construct3_fifo
-    0x02,   0x16,   0x02,   0x00, 0x01                // D_0_22 inv_set_fifo_rate
+    0x02,   0x16,   0x02,   0x00, 0x03                // D_0_22 inv_set_fifo_rate
 
     // This very last 0x01 WAS a 0x09, which drops the FIFO rate down to 20 Hz. 0x07 is 25 Hz,
     // 0x01 is 100Hz. Going faster than 100Hz (0x00=200Hz) tends to result in very noisy data.
@@ -310,6 +310,8 @@ const unsigned char dmpConfig[MPU6050_DMP_CONFIG_SIZE] PROGMEM = {
 
     // It is important to make sure the host processor can keep up with reading and processing
     // the FIFO output at the desired rate. Handling FIFO overflow cleanly is also a good idea.
+	
+	// Change by RamboErik 2015-07-29. Reduced the frequency to 25 Hz.
 };
 
 const unsigned char dmpUpdates[MPU6050_DMP_UPDATES_SIZE] PROGMEM = {
@@ -336,11 +338,11 @@ uint8_t MPU6050::dmpInitialize() {
 
     // disable sleep mode
     DEBUG_PRINTLN(F("Disabling sleep mode..."));
-    setSleepEnabled(false);
+    setSleepEnabled(FALSE);
 
     // get MPU hardware revision
     DEBUG_PRINTLN(F("Selecting user bank 16..."));
-    setMemoryBank(0x10, true, true);
+    setMemoryBank(0x10, TRUE, TRUE);
     DEBUG_PRINTLN(F("Selecting memory byte 6..."));
     setMemoryStartAddress(0x06);
     DEBUG_PRINTLN(F("Checking hardware revision..."));
@@ -348,7 +350,7 @@ uint8_t MPU6050::dmpInitialize() {
     DEBUG_PRINT(F("Revision @ user[16][6] = "));
     DEBUG_PRINTLNF(hwRevision, HEX);
     DEBUG_PRINTLN(F("Resetting memory bank selection to 0..."));
-    setMemoryBank(0, false, false);
+    setMemoryBank(0, FALSE, FALSE);
 
     // check OTP bank valid
     DEBUG_PRINTLN(F("Reading OTP bank valid flag..."));
@@ -361,18 +363,18 @@ uint8_t MPU6050::dmpInitialize() {
     int8_t xgOffsetTC = getXGyroOffsetTC();
     int8_t ygOffsetTC = getYGyroOffsetTC();
     int8_t zgOffsetTC = getZGyroOffsetTC();
-    DEBUG_PRINT(F("X gyro offset = "));
-    //DEBUG_PRINTLN(xgOffset);
+    /*DEBUG_PRINT(F("X gyro offset = "));
+    DEBUG_PRINTLN(xgOffset);
     DEBUG_PRINT(F("Y gyro offset = "));
-    //DEBUG_PRINTLN(ygOffset);
+    DEBUG_PRINTLN(ygOffset);
     DEBUG_PRINT(F("Z gyro offset = "));
-    //DEBUG_PRINTLN(zgOffset);
-
+    DEBUG_PRINTLN(zgOffset);
+*/
     // setup weird slave stuff (?)
     DEBUG_PRINTLN(F("Setting slave 0 address to 0x7F..."));
     setSlaveAddress(0, 0x7F);
     DEBUG_PRINTLN(F("Disabling I2C Master mode..."));
-    setI2CMasterModeEnabled(false);
+    setI2CMasterModeEnabled(FALSE);
     DEBUG_PRINTLN(F("Setting slave 0 address to 0x68 (self)..."));
     setSlaveAddress(0, 0x68);
     DEBUG_PRINTLN(F("Resetting I2C Master control..."));
@@ -416,7 +418,7 @@ uint8_t MPU6050::dmpInitialize() {
             setDMPConfig2(0x00);
 
             DEBUG_PRINTLN(F("Clearing OTP Bank flag..."));
-            setOTPBankValid(false);
+            setOTPBankValid(FALSE);
 
             DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
             setXGyroOffsetTC(xgOffsetTC);
@@ -460,7 +462,7 @@ uint8_t MPU6050::dmpInitialize() {
 
             DEBUG_PRINTLN(F("Setting zero-motion detection duration to 0..."));
             setZeroMotionDetectionDuration(0);
-
+		
             DEBUG_PRINTLN(F("Resetting FIFO..."));
             resetFIFO();
 
@@ -487,6 +489,7 @@ uint8_t MPU6050::dmpInitialize() {
 
             DEBUG_PRINTLN(F("Waiting for FIFO count > 2..."));
             while ((fifoCount = getFIFOCount()) < 3);
+			fifoCount = getFIFOCount();
 
             DEBUG_PRINT(F("Current FIFO count="));
             DEBUG_PRINTLN(fifoCount);
@@ -505,6 +508,7 @@ uint8_t MPU6050::dmpInitialize() {
 
             DEBUG_PRINTLN(F("Waiting for FIFO count > 2..."));
             while ((fifoCount = getFIFOCount()) < 3);
+			fifoCount = getFIFOCount();
 
             DEBUG_PRINT(F("Current FIFO count="));
             DEBUG_PRINTLN(fifoCount);
@@ -533,7 +537,7 @@ uint8_t MPU6050::dmpInitialize() {
                 return 3; // TODO: proper error code for no memory
             }*/
 
-            DEBUG_PRINTLN(F("Resetting FIFO and clearing INT status one last time..."));
+            //DEBUG_PRINTLN(F("Resetting FIFO and clearing INT status one last time..."));
             resetFIFO();
             getIntStatus();
         } else {
@@ -645,6 +649,14 @@ uint8_t MPU6050::dmpGetGyro(int16_t *data, const uint8_t* packet) {
     data[0] = (packet[16] << 8) + packet[17];
     data[1] = (packet[20] << 8) + packet[21];
     data[2] = (packet[24] << 8) + packet[25];
+    return 0;
+}
+uint8_t MPU6050::dmpGetGyro(VectorInt16 *v, const uint8_t* packet) {
+    // TODO: accommodate different arrangements of sent data (ONLY default supported now)
+    if (packet == 0) packet = dmpPacketBuffer;
+    v -> x = (packet[16] << 8) + packet[17];
+    v -> y = (packet[20] << 8) + packet[21];
+    v -> z = (packet[24] << 8) + packet[25];
     return 0;
 }
 // uint8_t MPU6050::dmpSetLinearAccelFilterCoefficient(float coef);

@@ -69,8 +69,8 @@ void twi_init(void)
 {
   // initialize state
   twi_state = TWI_READY;
-  twi_sendStop = true;		// default value
-  twi_inRepStart = false;
+  twi_sendStop = TRUE;		// default value
+  twi_inRepStart = FALSE;
   
   // activate internal pullups for twi.
   digitalWrite(SDA, 1);
@@ -80,7 +80,6 @@ void twi_init(void)
   cbi(TWSR, TWPS0);
   cbi(TWSR, TWPS1);
   TWBR = ((F_CPU / TWI_FREQ) - 16) / 2;
-
   /* twi bit rate formula from atmega128 manual pg 204
   SCL Frequency = CPU Clock Frequency / (16 + (2 * TWBR))
   note: TWBR should be 10 or higher for master mode
@@ -143,14 +142,14 @@ uint8_t twi_readFrom(uint8_t address, uint8_t* data, uint8_t length, uint8_t sen
   twi_slarw = TW_READ;
   twi_slarw |= address << 1;
 
-  if (true == twi_inRepStart) {
+  if (TRUE == twi_inRepStart) {
     // if we're in the repeated start state, then we've already sent the start,
     // (@@@ we hope), and the TWI statemachine is just waiting for the address byte.
     // We need to remove ourselves from the repeated start state before we enable interrupts,
     // since the ISR is ASYNC, and we could get confused if we hit the ISR before cleaning
     // up. Also, don't enable the START interrupt. There may be one pending from the 
     // repeated start that we sent outselves, and that would really confuse things.
-    twi_inRepStart = false;			// remember, we're dealing with an ASYNC ISR
+    twi_inRepStart = FALSE;			// remember, we're dealing with an ASYNC ISR
     TWDR = twi_slarw;
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN) | _BV(TWIE);	// enable INTs, but not START
   }
@@ -223,14 +222,14 @@ uint8_t twi_writeTo(uint8_t address, uint8_t* data, uint8_t length, uint8_t wait
   // if we're in a repeated start, then we've already sent the START
   // in the ISR. Don't do it again.
   //
-  if (true == twi_inRepStart) {
+  if (TRUE == twi_inRepStart) {
     // if we're in the repeated start state, then we've already sent the start,
     // (@@@ we hope), and the TWI statemachine is just waiting for the address byte.
     // We need to remove ourselves from the repeated start state before we enable interrupts,
     // since the ISR is ASYNC, and we could get confused if we hit the ISR before cleaning
     // up. Also, don't enable the START interrupt. There may be one pending from the 
     // repeated start that we sent outselves, and that would really confuse things.
-    twi_inRepStart = false;			// remember, we're dealing with an ASYNC ISR
+    twi_inRepStart = FALSE;			// remember, we're dealing with an ASYNC ISR
     TWDR = twi_slarw;				
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN) | _BV(TWIE);	// enable INTs, but not START
   }
@@ -383,7 +382,7 @@ ISR(TWI_vect)
 	if (twi_sendStop)
           twi_stop();
 	else {
-	  twi_inRepStart = true;	// we're gonna send the START
+	  twi_inRepStart = TRUE;	// we're gonna send the START
 	  // don't enable the interrupt. We'll generate the start, but we 
 	  // avoid handling the interrupt until we're in the next transaction,
 	  // at the point where we would normally issue the start.
@@ -423,7 +422,7 @@ ISR(TWI_vect)
 	if (twi_sendStop)
           twi_stop();
 	else {
-	  twi_inRepStart = true;	// we're gonna send the START
+	  twi_inRepStart = TRUE;	// we're gonna send the START
 	  // don't enable the interrupt. We'll generate the start, but we 
 	  // avoid handling the interrupt until we're in the next transaction,
 	  // at the point where we would normally issue the start.

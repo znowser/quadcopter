@@ -101,7 +101,7 @@ bool Stream::findUntil(char *target, size_t targetLen, char *terminator, size_t 
   int c;
   
   if( *target == 0)
-    return true;   // return true if target is a null string
+    return TRUE;   // return true if target is a null string
   while( (c = timedRead()) > 0){
     
     if(c != target[index])
@@ -110,18 +110,18 @@ bool Stream::findUntil(char *target, size_t targetLen, char *terminator, size_t 
     if( c == target[index]){
       //////Serial.print("found "); Serial.write(c); Serial.print("index now"); Serial.println(index+1);
       if(++index >= targetLen){ // return true if all chars in the target match
-        return true;
+        return TRUE;
       }
     }
     
     if(termLen > 0 && c == terminator[termIndex]){
       if(++termIndex >= termLen)
-        return false;       // return false if terminate string found before target string
+        return FALSE;       // return false if terminate string found before target string
     }
     else
       termIndex = 0;
   }
-  return false;
+  return FALSE;
 }
 
 
@@ -137,7 +137,7 @@ long Stream::parseInt()
 // this allows format characters (typically commas) in values to be ignored
 long Stream::parseInt(char skipChar)
 {
-  boolean isNegative = false;
+  bool isNegative = FALSE;
   long value = 0;
   int c;
 
@@ -150,7 +150,7 @@ long Stream::parseInt(char skipChar)
     if(c == skipChar)
       ; // ignore this charactor
     else if(c == '-')
-      isNegative = true;
+      isNegative = TRUE;
     else if(c >= '0' && c <= '9')        // is c a digit?
       value = value * 10 + c - '0';
     read();  // consume the character we got with peek
@@ -173,8 +173,8 @@ float Stream::parseFloat()
 // as above but the given skipChar is ignored
 // this allows format characters (typically commas) in values to be ignored
 float Stream::parseFloat(char skipChar){
-  boolean isNegative = false;
-  boolean isFraction = false;
+  bool isNegative = FALSE;
+  bool isFraction = FALSE;
   long value = 0;
   char c;
   float fraction = 1.0;
@@ -188,9 +188,9 @@ float Stream::parseFloat(char skipChar){
     if(c == skipChar)
       ; // ignore
     else if(c == '-')
-      isNegative = true;
+      isNegative = TRUE;
     else if (c == '.')
-      isFraction = true;
+      isFraction = TRUE;
     else if(c >= '0' && c <= '9')  {      // is c a digit?
       value = value * 10 + c - '0';
       if(isFraction)

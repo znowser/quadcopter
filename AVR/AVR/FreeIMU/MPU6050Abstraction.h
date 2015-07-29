@@ -5,6 +5,7 @@
 // for both classes must be in the include path of your project
 #include "I2Cdev.h"
 #include "helper_3dmath.h"
+#include "../lib/Arduino/Arduino.h"
 
 // MotionApps 2.0 DMP implementation, built using the MPU-6050EVB evaluation board
 //make sure the correct definition of the include is used.
@@ -12,7 +13,7 @@
 #include "MPU6050.h"
 
 //Hardware wiring
-#define MPU_INTERRUPT_PIN 9
+#define MPU_INTERRUPT_PIN 7 // External_Interrupt_7
 
 class MPUAbstraction{
 private:
@@ -37,10 +38,11 @@ private:
   VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
   VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
   VectorFloat gravity;    // [x, y, z]            gravity vector
-
-  void init();
+  
 public:
-  MPUAbstraction();
+  bool init();
+  bool enableDMP();
+  void resetFIFO();
   bool readYawPitchRoll(float ypr[3], int16_t acc[3]);
   static void MPUInt();
   bool deviceStatus();

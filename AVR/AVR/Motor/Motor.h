@@ -1,6 +1,7 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
+#include "../lib/Arduino/Arduino.h"
 #include "../lib/Servo/Servo.h"
 
 /*Representation of motor with ESC.
@@ -23,7 +24,7 @@ private:
   bool initialized;
 public:
   Motor(int pin);
-  Motor():initialized(false){};
+  Motor():initialized(FALSE){};
   void init(int pin);
   void callibrateESC();
   //void programESC(); //TODO

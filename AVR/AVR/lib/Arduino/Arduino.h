@@ -28,6 +28,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+#include "../oshdlc/types.h"
 #include "binary.h"
 
 #ifdef __cplusplus
@@ -46,8 +47,7 @@ extern "C"{
 #define OUTPUT 0x1
 #define INPUT_PULLUP 0x2
 
-#define true 0x1
-#define false 0x0
+
 
 #define PI 3.1415926535897932384626433832795
 #define HALF_PI 1.5707963267948966192313216916398
@@ -110,12 +110,8 @@ extern "C"{
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
 
-typedef unsigned int word;
-
 #define bit(b) (1UL << (b))
 
-typedef uint8_t boolean;
-typedef uint8_t byte;
 
 void init(void);
 void initVariant(void);
@@ -173,8 +169,11 @@ extern const uint8_t PROGMEM digital_pin_to_timer_PGM[];
 #define portInputRegister(P) ( (volatile uint8_t *)( pgm_read_word( port_to_input_PGM + (P))) )
 #define portModeRegister(P) ( (volatile uint8_t *)( pgm_read_word( port_to_mode_PGM + (P))) )
 
+
 #define NOT_A_PIN 0
 #define NOT_A_PORT 0
+
+typedef uint8_t byte;
 
 #ifdef ARDUINO_MAIN
 #define PA 1
@@ -209,7 +208,7 @@ extern const uint8_t PROGMEM digital_pin_to_timer_PGM[];
 #include "HardwareSerial.h"
 
 uint16_t makeWord(uint16_t w);
-uint16_t makeWord(byte h, byte l);
+uint16_t makeWord(uint8_t h, uint8_t l);
 
 #define word(...) makeWord(__VA_ARGS__)
 
@@ -217,6 +216,7 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout = 100000
 
 void tone(uint8_t _pin, unsigned int frequency, unsigned long duration = 0);
 void noTone(uint8_t _pin);
+
 
 // WMath prototypes
 long random(long);

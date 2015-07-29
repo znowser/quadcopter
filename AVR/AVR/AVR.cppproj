@@ -27,15 +27,15 @@
     <eraseonlaunchrule>0</eraseonlaunchrule>
     <AsfFrameworkConfig>
       <framework-data>
-  <options />
-  <configurations />
-  <files />
-  <documentation help="" />
-  <offline-documentation help="" />
-  <dependencies>
-    <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.6.0" />
-  </dependencies>
-</framework-data>
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.15.0" />
+        </dependencies>
+      </framework-data>
     </AsfFrameworkConfig>
     <avrtool>com.atmel.avrdbg.tool.simulator</avrtool>
     <com_atmel_avrdbg_tool_simulator>
@@ -140,6 +140,12 @@
     <Compile Include="cellVoltage\cellVoltage.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Communication\Communication.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Communication\Communication.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="FreeIMU\helper_3dmath.h">
       <SubType>compile</SubType>
     </Compile>
@@ -168,12 +174,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="FreeIMU\MS561101BA.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="HoverRegulator\Hover.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="HoverRegulator\Hover.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lib\Arduino\Arduino.h">
@@ -221,22 +221,22 @@
     <Compile Include="lib\Arduino\WInterrupts.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="lib\Arduino\wiring.c">
+    <Compile Include="lib\Arduino\wiring.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="lib\Arduino\wiring_analog.c">
+    <Compile Include="lib\Arduino\wiring_analog.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="lib\Arduino\wiring_digital.c">
+    <Compile Include="lib\Arduino\wiring_digital.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lib\Arduino\wiring_private.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="lib\Arduino\wiring_pulse.c">
+    <Compile Include="lib\Arduino\wiring_pulse.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="lib\Arduino\wiring_shift.c">
+    <Compile Include="lib\Arduino\wiring_shift.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lib\Arduino\WMath.cpp">
@@ -246,6 +246,54 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lib\Arduino\WString.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\dque.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\dque.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlcbuf.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlcbuf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlclib.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlclib.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlcrec.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlcrec.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlcr_table.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlctrans.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlctrans.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\hdlct_table.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\lib_crc.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\lib_crc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\types.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="lib\oshdlc\version.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lib\Servo\Servo.cpp">
@@ -275,6 +323,12 @@
     <Compile Include="main.cpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Regulator\PID.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Regulator\PID.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="SensorDataStruct.h">
       <SubType>compile</SubType>
     </Compile>
@@ -282,12 +336,14 @@
   <ItemGroup>
     <Folder Include="lib" />
     <Folder Include="lib\Arduino\" />
+    <Folder Include="lib\oshdlc" />
     <Folder Include="lib\Wire" />
     <Folder Include="lib\Servo\" />
     <Folder Include="Motor" />
     <Folder Include="cellVoltage" />
     <Folder Include="FreeIMU" />
-    <Folder Include="HoverRegulator" />
+    <Folder Include="Communication" />
+    <Folder Include="Regulator" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

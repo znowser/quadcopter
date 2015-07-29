@@ -324,14 +324,14 @@ HardwareSerial::HardwareSerial(ring_buffer *rx_buffer, ring_buffer *tx_buffer,
 void HardwareSerial::begin(unsigned long baud)
 {
   uint16_t baud_setting;
-  bool use_u2x = true;
+  bool use_u2x = TRUE;
 
 #if F_CPU == 16000000UL
   // hardcoded exception for compatibility with the bootloader shipped
   // with the Duemilanove and previous boards and the firmware on the 8U2
   // on the Uno and Mega 2560.
   if (baud == 57600) {
-    use_u2x = false;
+    use_u2x = FALSE;
   }
 #endif
 
@@ -347,7 +347,7 @@ try_again:
   
   if ((baud_setting > 4095) && use_u2x)
   {
-    use_u2x = false;
+    use_u2x = FALSE;
     goto try_again;
   }
 
@@ -355,7 +355,7 @@ try_again:
   *_ubrrh = baud_setting >> 8;
   *_ubrrl = baud_setting;
 
-  transmitting = false;
+  transmitting = FALSE;
 
   sbi(*_ucsrb, _rxen);
   sbi(*_ucsrb, _txen);
@@ -367,14 +367,14 @@ void HardwareSerial::begin(unsigned long baud, byte config)
 {
   uint16_t baud_setting;
   uint8_t current_config;
-  bool use_u2x = true;
+  bool use_u2x = TRUE;
 
 #if F_CPU == 16000000UL
   // hardcoded exception for compatibility with the bootloader shipped
   // with the Duemilanove and previous boards and the firmware on the 8U2
   // on the Uno and Mega 2560.
   if (baud == 57600) {
-    use_u2x = false;
+    use_u2x = FALSE;
   }
 #endif
 
@@ -390,7 +390,7 @@ try_again:
   
   if ((baud_setting > 4095) && use_u2x)
   {
-    use_u2x = false;
+    use_u2x = FALSE;
     goto try_again;
   }
 
@@ -455,7 +455,7 @@ void HardwareSerial::flush()
 {
   // UDR is kept full while the buffer is not empty, so TXC triggers when EMPTY && SENT
   while (transmitting && ! (*_ucsra & _BV(TXC0)));
-  transmitting = false;
+  transmitting = FALSE;
 }
 
 size_t HardwareSerial::write(uint8_t c)
@@ -473,14 +473,14 @@ size_t HardwareSerial::write(uint8_t c)
 	
   sbi(*_ucsrb, _udrie);
   // clear the TXC bit -- "can be cleared by writing a one to its bit location"
-  transmitting = true;
+  transmitting = TRUE;
   sbi(*_ucsra, TXC0);
   
   return 1;
 }
 
 HardwareSerial::operator bool() {
-	return true;
+	return TRUE;
 }
 
 // Preinstantiate Objects //////////////////////////////////////////////////////

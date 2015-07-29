@@ -1,6 +1,6 @@
 // I2Cdev library collection - Main I2C device class header file
 // Abstracts bit and byte I2C R/W functions into a convenient class
-// 6/9/2012 by Jeff Rowberg <jeff@rowberg.net>
+// 2013-06-05 by Jeff Rowberg <jeff@rowberg.net>
 //
 // Changelog:
 //      2013-05-06 - add Francesco Ferrara's Fastwire v0.24 implementation with small modifications
@@ -46,12 +46,15 @@ THE SOFTWARE.
 #ifndef _I2CDEV_H_
 #define _I2CDEV_H_
 
+#include "../lib/Arduino/Arduino.h"
 // -----------------------------------------------------------------------------
 // I2C interface implementation setting
 // -----------------------------------------------------------------------------
-//#define I2CDEV_IMPLEMENTATION       I2CDEV_ARDUINO_WIRE
-// <-- !!! Changed by Ramboerik 2014-09-27 to use FastWIRE!!!
-#define I2CDEV_IMPLEMENTATION       I2CDEV_BUILTIN_FASTWIRE
+#ifndef I2CDEV_IMPLEMENTATION
+// The only implementation that is supported by the MPU6050
+// DO NOT CHANGE!
+#define I2CDEV_IMPLEMENTATION       I2CDEV_ARDUINO_WIRE
+#endif // I2CDEV_IMPLEMENTATION
 
 // comment this out if you are using a non-optimal IDE/implementation setting
 // but want the compiler to shut up about it
@@ -71,8 +74,6 @@ THE SOFTWARE.
 // -----------------------------------------------------------------------------
 //#define I2CDEV_SERIAL_DEBUG
 
-//Modified by ramboerik 2014-09-2
-#include "../lib/Arduino/Arduino.h"
 
 #ifdef ARDUINO
     #if ARDUINO < 100
@@ -86,6 +87,11 @@ THE SOFTWARE.
     #if I2CDEV_IMPLEMENTATION == I2CDEV_I2CMASTER_LIBRARY
         #include <I2C.h>
     #endif
+#endif
+
+#ifdef SPARK
+    #include <spark_wiring_i2c.h>
+    #define ARDUINO 101
 #endif
 
 // 1000ms default read timeout (modify with "I2Cdev::readTimeout = [ms];")
@@ -104,14 +110,14 @@ class I2Cdev {
         static int8_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, uint16_t timeout=I2Cdev::readTimeout);
         static int8_t readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data, uint16_t timeout=I2Cdev::readTimeout);
 
-        static bool writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-        static bool writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data);
-        static bool writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
-        static bool writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
-        static bool writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-        static bool writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
-        static bool writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        static bool writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+        static int8_t writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+        static int8_t writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data);
+        static int8_t writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+        static int8_t writeBitsW(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint16_t data);
+        static int8_t writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+        static int8_t writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
+        static int8_t writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        static int8_t writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
 
         static uint16_t readTimeout;
 };
@@ -147,10 +153,10 @@ class I2Cdev {
 
     class Fastwire {
         private:
-            static boolean waitInt();
+            static bool waitInt();
 
         public:
-            static void setup(int khz, boolean pullup);
+            static void setup(int khz, bool pullup);
             static byte beginTransmission(byte device);
             static byte write(byte value);
             static byte writeBuf(byte device, byte address, byte *data, byte num);
@@ -219,7 +225,12 @@ class I2Cdev {
     #define TW_MT_DATA_NACK     0x30
     
     #define CPU_FREQ            16000000L
-    #define TWI_FREQ            100000L
+	// The I2C buss speed is changed from 100kHz to 400kHz to avoid FIFO overflow caused by MPU6050
+	// set 400kHz mode @ 16MHz CPU or 200kHz mode @ 8MHz CPU for the I2C.
+	// quadruple i2c buss speed to aviod FIFO-overflow from the sensorcard.
+	// source : http://www.i2cdevlib.com/forums/topic/27-fifo-overflow/
+	// TWI_FREQ = 400000 => TWBR = 12;
+    #define TWI_FREQ            400000L
     #define TWI_BUFFER_LENGTH   32
     
     /* TWI Status is in TWSR, in the top 5 bits: TWS7 - TWS3 */

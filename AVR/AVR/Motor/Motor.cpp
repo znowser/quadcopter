@@ -3,7 +3,7 @@
 
 
 Motor::Motor(int pin){
-  initialized = false;
+  initialized = FALSE;
   init(pin);
 }
 
@@ -13,7 +13,7 @@ void Motor::init(int pin){
     //init members
     this->pin = pin;
     speed = MIN;
-    initialized = true;
+    initialized = TRUE;
     //Serial.println("Initialize motor");
     esc.attach(pin);
     //=== arm ESC ===
