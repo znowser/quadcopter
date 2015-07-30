@@ -146,6 +146,18 @@
     <Compile Include="Communication\Communication.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Communication\crc16.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Communication\crc16.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Communication\hdlc.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Communication\hdlc.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="FreeIMU\helper_3dmath.h">
       <SubType>compile</SubType>
     </Compile>
@@ -248,54 +260,6 @@
     <Compile Include="lib\Arduino\WString.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="lib\oshdlc\dque.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\dque.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlcbuf.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlcbuf.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlclib.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlclib.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlcrec.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlcrec.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlcr_table.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlctrans.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlctrans.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\hdlct_table.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\lib_crc.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\lib_crc.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\types.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lib\oshdlc\version.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="lib\Servo\Servo.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -336,7 +300,6 @@
   <ItemGroup>
     <Folder Include="lib" />
     <Folder Include="lib\Arduino\" />
-    <Folder Include="lib\oshdlc" />
     <Folder Include="lib\Wire" />
     <Folder Include="lib\Servo\" />
     <Folder Include="Motor" />

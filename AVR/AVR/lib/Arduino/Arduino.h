@@ -28,7 +28,6 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#include "../oshdlc/types.h"
 #include "binary.h"
 
 #ifdef __cplusplus
@@ -42,6 +41,9 @@ extern "C"{
 
 #define HIGH 0x1
 #define LOW  0x0
+
+#define TRUE 1
+#define FALSE 0
 
 #define INPUT 0x0
 #define OUTPUT 0x1
