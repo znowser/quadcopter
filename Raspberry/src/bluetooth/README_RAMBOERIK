@@ -1,0 +1,3 @@
+* Follow the pdf guide
+* The name of the modified packet causes errors, remove the modified_by....
+* library jackd0 and jackd-dev must be installed
