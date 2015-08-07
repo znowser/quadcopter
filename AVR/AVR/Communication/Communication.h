@@ -10,25 +10,34 @@
 #define COMMUNICATION_H___
 
 #include "../lib/Arduino/Arduino.h"
-#include "../lib/oshdlc/hdlclib.h"
+#include "hdlc.h"
 
 /*
- Maximum packet size is 256, do NOT try to send larger packets!
+ Maximum packet size is HDLC_MAX_LGT = 128 bytes, do NOT try to send larger packets!
+ 
+ The Communication will return when the deadline is met.
 */
+
+#define SERIAL_BAUDRATE 115200
 
 class Communication{
 	private:
-	hdlc_chan_t *p_hdlc;
-	uint8_t enc_out[HDLC_PKT_MAXLEN];
-	uint8_t recvBuffer[HDLC_PKT_MAXLEN];
-	uint16_t pos;
-	
+		static int packetLength;
+		static char buffer[HDLC_MAX_LGT];
+		static int snd(const char c);
+		static int rx(char *c);
+		static int dataPos;
+		static unsigned long deadline, startTime;
+		static int numOfTimeouts;
 	public:
-	Communication();
-	int receive();
-	void send(const uint8_t *data, int len);
+		void init(unsigned long deadline);
+		static bool receive(char* &packet, int &packetLength);
+		/*Send data of length len*/
+		static int send(const char *data, int len);
+		/*Send null terminated text string*/
+		static int send(const char *text);
+		static int getTimeouts();
+		static void resetTimeouts();
 };
-
-
 
 #endif /* COMMUNICATION_H___ */

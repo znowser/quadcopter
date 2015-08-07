@@ -5,33 +5,73 @@
  *  Author: Erik
  */ 
 #include "Communication.h"
+#include "crc16.h"
 
-Communication::Communication(){
-	HDLC_createChannel();
-	pos = 0;
+int Communication::packetLength = 0;
+char Communication::buffer[HDLC_MAX_LGT];
+unsigned long Communication::deadline = 0;
+unsigned long Communication:: startTime = 0;
+int Communication::numOfTimeouts = 0;
+
+void Communication::init(unsigned long deadline){
+	// Setup serial connection
+	Serial1.begin(SERIAL_BAUDRATE);
+	
+	this->deadline = deadline;
 }
 
-int Communication::receive(){
-	hdlc_packet_t *dec_packet;
-	
-	while(Serial1.available()){
-		recvBuffer[pos++] = Serial1.read();
-		
-		//Check if a complete packet has been received
-		if(HDLC_decode(p_hdlc, recvBuffer, HDLC_PKT_MAXLEN)){
-			dec_packet = HDLC_getDecodedPacket(p_hdlc);
-			//TODO decode packet...
-			HDLC_freePacket ( &dec_packet );
-			pos = 0;
-		}	
+/*
+* The receive function waits for or receive data until the deadline is met.
+* if a whole packet is received within the deadline the function returns.
+* If the packet is not received within the deadline the function continues 
+* receiving the rest of the packet the next time the function is called.
+*/
+bool Communication::receive(char* &packet, int &packetLength){
+	bool res = false;
+	startTime = millis();
+	int statusRX = hdlc_RX(rx, buffer ,&packetLength, sizeof(buffer));
+	packet = NULL;
+
+	if(statusRX == 0){
+		if(packetLength > 0){
+			res = true;
+			packet = buffer;
+		}
 	}
-	
+	return res;
+}
+
+int Communication::send(const char *data, int len){		
+	return hdlc_TX(snd, data, len);
+}
+
+int Communication::send(const char *text){
+	return hdlc_TX(snd, text, strlen(text));
+}
+
+/* send callback used by the hdlc implementation returns 0 on success */
+int Communication::snd(const char c){
+	Serial1.print(c);
 	return 0;
 }
 
-void Communication::send(const uint8_t *data, int len){
-	int enc_osize = HDLC_encode(p_hdlc, data, len, enc_out, sizeof(enc_out));
+/* receive callback used by the hdlc implementation returns 0 on success */
+int Communication::rx(char *c){	
+	while(!Serial1.available()){
+		if(millis() - startTime >= deadline){
+			++numOfTimeouts;
+			return -1;
+		}
+	}
 	
-	for(int i = 0; i < enc_osize; ++i)
-		Serial1.print(enc_out[i]);
+	*c = Serial1.read();
+	return 0;
+}
+
+int Communication::getTimeouts(){
+	return numOfTimeouts;
+}
+
+void Communication::resetTimeouts(){
+	numOfTimeouts = 0;
 }

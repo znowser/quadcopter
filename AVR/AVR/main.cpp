@@ -13,6 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "Regulator/PID.h"
 #include "Communication/Communication.h"
+#include "Communication/Protocol.h"
 
 #define MOVAVG_SIZE 32
 #define SCHEDULE_MINOR_CYCLE 10
@@ -28,6 +29,13 @@ float getAvg(float *buff, int size);
 const bool regulator_activated = TRUE;
 void updateSensorValues(sensordata &sensor, Motor motor[4], CellVoltage battery[3], MS561101BA &baro, float ypr[3]);
 void halt();
+
+
+/*
+ TODO add timeout on the rx serial communication and
+ implement crc16 on the channel.
+
+*/
 
 int main(void)
 {
@@ -45,51 +53,53 @@ int main(void)
 	unsigned long startTime, endTime;
 	unsigned long scheuleCounter = 0, scheduleDelay = 0;
 	
-	//initial all pins according to Arduino standard
+	//init all pins according to Arduino standard
 	init();
+	
+	//init serial communication and set receive deadline to 4ms.
+	com.init(4);
 	
 	// Join the I2C buss. The only implementation that supports all
 	// features that is required by the MPU6050 is the standard Arduino 
 	// implementation (wire.h and twi.h).
 	// The buss is operating at 400 kHz. 
 	Wire.begin();
+	delay(100);
 	
-	// Setup serial connection
-	Serial1.begin(115200);
-	Serial1.println("\n\nBoot Sequence Launched...");
+	com.send("Boot Sequence Launched...");
 	
 	/*==========Init Sensors ============*/
 	//init gyro and magnetic field sensors	
 	bootStatus = mpu.init();
 	if(bootStatus)
-		Serial1.println("MPU6050 connection [OK]");
+		com.send("MPU6050 connection [OK]");
 	else
-		Serial1.println("MPU6050 connection [FAILED]");
+		com.send("MPU6050 connection [FAILED]");
 		
 	bootStatus = mpu.enableDMP();
 	if(bootStatus)
-		Serial1.println("MPU6050 initialized [OK]");
+		com.send("MPU6050 initialized [OK]");
 	else
-		Serial1.println("MPU6050 initialized [FAILED]");
+		com.send("MPU6050 initialized [FAILED]");
 	
 	//barometer and temperature
 	bootStatus = baro.init(MS561101BA_ADDR_CSB_LOW);
 	if(bootStatus)
-		Serial1.println("MS561101BA initialized [OK]");
+		com.send("MS561101BA initialized [OK]");
 	else
-		Serial1.println("MS561101BA initialized [FAILED]");
+		com.send("MS561101BA initialized [FAILED]");
 	//*==========Init Motors=============*/
 	
 	/*==========Init Engines ============*/
 	//Hardware mapping of motors
-	
+	/*
 	motor[LF].init(13);
 	motor[RF].init(14);
 	motor[LB].init(15);
 	motor[RB].init(16);
 	//minimum wait time for arming
 	delay(8000);
-	Serial1.println("Engines armed [OK]");
+	Serial1.println("Engines armed [OK]");*/
 	
 	/*==================================*/
 	
@@ -98,7 +108,7 @@ int main(void)
 	battery[CELL1].init(ADC0);
 	battery[CELL2].init(ADC1);
 	battery[CELL3].init(ADC2);
-	Serial1.println("Battery initialized [OK]");
+	com.send("Battery initialized [OK]");
 	/*==================================*/
 
 	rollRegulator.init(5.f, 0.f, 0.f);
@@ -113,10 +123,10 @@ int main(void)
 	
 	// Boot status check, don't continue if something went wrong.
 	if(bootStatus)
-		Serial1.println("Boot Sequence [OK]");
+		com.send("Boot_Sequence_[OK]");
 	else{
-		Serial1.println("Boot Sequence [FAILED]");	
-		Serial1.println("Halting...");
+		com.send("Boot Sequence [FAILED]");	
+		com.send("Halting...");
 		halt();
 	}		
 	
@@ -125,6 +135,8 @@ int main(void)
 	//sensor data.
 	mpu.resetFIFO();
 	
+	int packetLength = 0;
+	char *packet = NULL;
 	//Main program loop
     while(TRUE){
 		//Measure the time of the minor cycle
@@ -137,28 +149,50 @@ int main(void)
 			
 		}
 		
-		//Second minor cycle
+		// Second minor cycle. The second minor cycle is responsible
+		// for the communication with the rasp and the regulators.
 		else if(scheuleCounter % 2 == 1){
-			
-			//check if there is any new data from the Rasp.
-			com.receive();
-								
+			// check if there is any new data from the Rasp.
+			// The deadline is set to 4ms which means that there
+			// is room for less than 6ms further calculations
+			// after the receive function has been called!
+			// 115200 * 10*10^-3 = 1152 bytes can be received on 10 ms.
+			// with the timeout set to 4ms about 500 bytes can be received
+			// each cycle. This should be enough for the application.
+			// Do NOT try to send/receive more than 500 bytes more frequently 
+			// than 20 ms. This equals a bit rate of 25000 bytes/s.
+			if(com.receive(packet, packetLength)){
+				if(!Protocol::decode(&sensor, packet, packetLength))
+					com.send("Bad packet");
+					
+				if(sensor.ps3.button[JS_BUTTON_CIRCLE])
+					com.send("Circle pressed");
+				if(sensor.ps3.button[JS_BUTTON_CROSS])
+					com.send("Cross pressed");
+					
+				//else
+				//	com.send("Ok ");
+			    //com.send(d.c_str(), d.length());
+				//com.resetTimeouts();
+			}
+			 
+			// == 6 ms more to perform calculations ==				
 			/* =========== Roll regulator =========== */
 			float rollReg = rollRegulator.regulate(ypr[2], 0.0f);
-			Serial1.print(rollReg);
+			/*Serial1.print(rollReg);
 			Serial1.print(" ");
 			Serial1.println(ypr[2]);
-			
+			*/
 			//Serial1.print("Left motors: ");
 			//Serial1.println(engineSpeed*(1 + rollReg));
 			
 			//Left side of the aircraft
-			motor[LF].setSpeed(engineSpeed*(1 - rollReg));
+			/*motor[LF].setSpeed(engineSpeed*(1 - rollReg));
 			motor[LB].setSpeed(engineSpeed*(1 - rollReg));
 
 			//Right side of the aircraft
 			motor[RF].setSpeed(engineSpeed*(1 + rollReg));
-			motor[RB].setSpeed(engineSpeed*(1 + rollReg));
+			motor[RB].setSpeed(engineSpeed*(1 + rollReg));*/
 			/* ====================================== */
 		}
 		
@@ -171,10 +205,8 @@ int main(void)
 		else if(scheduleDelay == endTime){
 			; // Do nothing
 		}
-		else {
-			Serial1.print("Schedule overflow ");
-			Serial1.println(endTime - scheduleDelay);
-		}
+		else 
+			com.send("Schedule overflow ");
 				
 		//Serial1.println(mpu.getAccelerationX());
 		//check if there is new sensordata to recieve from the sensor card
