@@ -13,6 +13,7 @@
 #include "FreeIMU/MS561101BA.h"
 #include "Regulator/PID.h"
 #include "Communication/Communication.h"
+#include "Communication/Protocol.h"
 
 #define MOVAVG_SIZE 32
 #define SCHEDULE_MINOR_CYCLE 10
@@ -55,8 +56,8 @@ int main(void)
 	//init all pins according to Arduino standard
 	init();
 	
-	//init serial communication
-	com.init();
+	//init serial communication and set receive deadline to 4ms.
+	com.init(4);
 	
 	// Join the I2C buss. The only implementation that supports all
 	// features that is required by the MPU6050 is the standard Arduino 
@@ -148,24 +149,34 @@ int main(void)
 			
 		}
 		
-		//Second minor cycle
+		// Second minor cycle. The second minor cycle is responsible
+		// for the communication with the rasp and the regulators.
 		else if(scheuleCounter % 2 == 1){
-			//check if there is any new data from the Rasp.
-			 if(com.receive(packet, packetLength)){
-			   com.send(packet, packetLength);
-		   }
+			// check if there is any new data from the Rasp.
+			// The deadline is set to 4ms which means that there
+			// is room for less than 6ms further calculations
+			// after the receive function has been called!
+			// 115200 * 10*10^-3 = 1152 bytes can be received on 10 ms.
+			// with the timeout set to 4ms about 500 bytes can be received
+			// each cycle. This should be enough for the application.
+			// Do NOT try to send/receive more than 500 bytes more frequently 
+			// than 20 ms. This equals a bit rate of 25000 bytes/s.
+			if(com.receive(packet, packetLength)){
+				if(!Protocol::decode(&sensor, packet, packetLength))
+					com.send("Bad packet");
+					
+				if(sensor.ps3.button[JS_BUTTON_CIRCLE])
+					com.send("Circle pressed");
+				if(sensor.ps3.button[JS_BUTTON_CROSS])
+					com.send("Cross pressed");
+					
+				//else
+				//	com.send("Ok ");
+			    //com.send(d.c_str(), d.length());
+				//com.resetTimeouts();
+			}
 			 
-			//Serial1.println("heloo");
-			
-			
-			//com.send("Looooooooooooong Message");
-			/*com.send((char*)&testChar, 1);
-			++testChar;	
-								
-			if(testChar  > 0x40){
-				testChar = 0x30;
-			}*/
-								
+			// == 6 ms more to perform calculations ==				
 			/* =========== Roll regulator =========== */
 			float rollReg = rollRegulator.regulate(ypr[2], 0.0f);
 			/*Serial1.print(rollReg);

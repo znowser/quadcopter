@@ -70,7 +70,7 @@ static int stuff_tx( int (*ch_tx)(char ch), char c)
 }
 
 //----------------------------------------------------------------------------
-int hdlc_TX( int (*ch_tx)(char ch),  char *data ,int len)
+int hdlc_TX( int (*ch_tx)(const char ch),  const char *data ,int len)
 {
 
   if (HDLC_MAX_LGT < len)
