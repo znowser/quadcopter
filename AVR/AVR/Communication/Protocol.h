@@ -24,7 +24,9 @@
 #define LENGTH_POSITION 1
 
 
-#define PS3_CONTROLLER_DATA 0
+#define STOP_ENGINE_PACKET 0
+#define START_ENGINE_PACKET 1
+#define PS3_CONTROLLER_DATA 2
 
 class Protocol{	
 	public:

@@ -16,6 +16,14 @@ bool Protocol::decode(sensordata *data, char *packet, unsigned length){
 		res = false;
 	else{
 		switch(packet[PACKET_TYPE_POSITION]){
+			case STOP_ENGINE_PACKET:
+				data->stop = true;
+			break;
+			
+			case START_ENGINE_PACKET:
+				data->stop = false;
+			break;
+			
 			case PS3_CONTROLLER_DATA:
 				for(int i = 2; i < length; ++i)
 					data->ps3.button[i - 2] = packet[i];

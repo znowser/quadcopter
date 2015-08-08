@@ -52,6 +52,10 @@ struct constants {
 };
 
 struct sensordata {
+	
+	//flag that indicates whether the engines are allowed to run or not
+	bool stop;
+	
 	/*Angles*/
 	int motorSpeed[4];
 	int cellVoltage[3];

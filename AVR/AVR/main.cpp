@@ -39,16 +39,25 @@ void halt();
 
 int main(void)
 {
+	//Used by the sensors
 	Motor motor[4];
 	CellVoltage battery[3];
 	MPUAbstraction mpu;
 	MS561101BA baro;
 	sensordata sensor;
-	PID rollRegulator;
-	Communication com;
-	unsigned engineSpeed = 10;
-	
 	float ypr[3];
+	
+	//Used by the regulator
+	PID rollRegulator;
+	unsigned engineSpeed = 0, engineSpeedLF = 0, engineSpeedLB = 0, engineSpeedRF = 0, engineSpeedRB = 0;
+	int calibrationDir = 1;
+	
+	//Used by the communication
+	Communication com;
+	int packetLength = 0;
+	char *packet = NULL;
+	
+	//Used by boot and scheduler
 	bool bootStatus = TRUE;
 	unsigned long startTime, endTime;
 	unsigned long scheuleCounter = 0, scheduleDelay = 0;
@@ -92,14 +101,14 @@ int main(void)
 	
 	/*==========Init Engines ============*/
 	//Hardware mapping of motors
-	/*
-	motor[LF].init(13);
-	motor[RF].init(14);
-	motor[LB].init(15);
-	motor[RB].init(16);
+	
+	motor[LF].init(16);
+	motor[RF].init(15);
+	motor[LB].init(14);
+	motor[RB].init(13);
 	//minimum wait time for arming
 	delay(8000);
-	Serial1.println("Engines armed [OK]");*/
+	Serial1.println("Engines armed [OK]");
 	
 	/*==================================*/
 	
@@ -110,8 +119,12 @@ int main(void)
 	battery[CELL3].init(ADC2);
 	com.send("Battery initialized [OK]");
 	/*==================================*/
+	
+	// For safety reasons, turn off the engines until
+	// the connection to the rasp is established.
+	sensor.stop = true;
 
-	rollRegulator.init(5.f, 0.f, 0.f);
+	rollRegulator.init(1.f, 0.f, 0.f);
 	
 	
 	// populate movavg_buff before starting loop
@@ -123,7 +136,7 @@ int main(void)
 	
 	// Boot status check, don't continue if something went wrong.
 	if(bootStatus)
-		com.send("Boot_Sequence_[OK]");
+		com.send("Boot Sequence [OK]");
 	else{
 		com.send("Boot Sequence [FAILED]");	
 		com.send("Halting...");
@@ -135,8 +148,6 @@ int main(void)
 	//sensor data.
 	mpu.resetFIFO();
 	
-	int packetLength = 0;
-	char *packet = NULL;
 	//Main program loop
     while(TRUE){
 		//Measure the time of the minor cycle
@@ -145,8 +156,8 @@ int main(void)
 		//First minor cycle, takes 8 ms to process
 		if((++scheuleCounter) % 2 == 0){
 			if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
+				;
 			}
-			
 		}
 		
 		// Second minor cycle. The second minor cycle is responsible
@@ -162,38 +173,95 @@ int main(void)
 			// Do NOT try to send/receive more than 500 bytes more frequently 
 			// than 20 ms. This equals a bit rate of 25000 bytes/s.
 			if(com.receive(packet, packetLength)){
-				if(!Protocol::decode(&sensor, packet, packetLength))
+				if(!Protocol::decode(&sensor, packet, packetLength)){
+					memset(&sensor, 0x00, sizeof(sensordata));
 					com.send("Bad packet");
+				}
+				else{
+					if(sensor.ps3.button[JS_BUTTON_START]){
+						//com.send("Turning engines on");
+						sensor.stop = false;
+					}
+					else if(sensor.ps3.button[JS_BUTTON_SELECT]){
+						//com.send("Turning engines off");
+						sensor.stop = true;
+					}
 					
-				if(sensor.ps3.button[JS_BUTTON_CIRCLE])
-					com.send("Circle pressed");
-				if(sensor.ps3.button[JS_BUTTON_CROSS])
-					com.send("Cross pressed");
+					if(sensor.ps3.button[JS_BUTTON_TRIANGLE]){
+						rollRegulator.P += 0.1;
+						//com.send("Increasing P");
+					}
+					if(sensor.ps3.button[JS_BUTTON_CROSS]){
+						rollRegulator.P -= 0.1;
+						//com.send("Decreasing P");
+					}
 					
-				//else
-				//	com.send("Ok ");
-			    //com.send(d.c_str(), d.length());
-				//com.resetTimeouts();
+					if(sensor.ps3.button[JS_BUTTON_L1]){
+						engineSpeed -= 1;
+						if(engineSpeed < 0)
+						 engineSpeed = 0;
+						//com.send("Decreasing speed");
+					}
+				
+					if(sensor.ps3.button[JS_BUTTON_R1]){
+						engineSpeed += 1;
+						//com.send("Increasing speed");
+					}
+					
+					if(sensor.ps3.button[JS_BUTTON_PS3])
+						calibrationDir = -1;
+					else
+						calibrationDir = 1;
+										
+					if(sensor.ps3.button[JS_BUTTON_UP])
+						engineSpeedLF += engineSpeedLF + calibrationDir >= 0 ? calibrationDir:0;
+						
+					if(sensor.ps3.button[JS_BUTTON_RIGHT])
+						engineSpeedRF += engineSpeedRF + calibrationDir >= 0 ? calibrationDir:0;
+					
+					if(sensor.ps3.button[JS_BUTTON_LEFT])
+						engineSpeedLB += engineSpeedLB + calibrationDir >= 0 ? calibrationDir:0;
+					
+					if(sensor.ps3.button[JS_BUTTON_DOWN])
+						engineSpeedRB += engineSpeedRB + calibrationDir >= 0 ? calibrationDir:0;
+					
+				}
 			}
 			 
-			// == 6 ms more to perform calculations ==				
-			/* =========== Roll regulator =========== */
-			float rollReg = rollRegulator.regulate(ypr[2], 0.0f);
-			/*Serial1.print(rollReg);
-			Serial1.print(" ");
-			Serial1.println(ypr[2]);
-			*/
-			//Serial1.print("Left motors: ");
-			//Serial1.println(engineSpeed*(1 + rollReg));
+			// == 6 ms more to perform calculations ==
+			if(sensor.stop){	
+				motor[LF].setSpeed(0);
+				motor[LB].setSpeed(0);
+				motor[RF].setSpeed(0);
+				motor[RB].setSpeed(0);
+			}
+			else{
+				/* =========== Roll regulator =========== */
+				float rollReg = rollRegulator.regulate(ypr[2], 0.0f);
+				
+				motor[LF].setSpeed(engineSpeed + engineSpeedLF);
+				motor[LB].setSpeed(engineSpeed + engineSpeedLB);
+				motor[RF].setSpeed(engineSpeed + engineSpeedRF);
+				motor[RB].setSpeed(engineSpeed + engineSpeedRB);
+				
+				/*Serial1.print(rollReg);
+				Serial1.print(" ");
+				Serial1.println(ypr[2]);
+				
+				
+				*/
+				//Serial1.print("Left motors: ");
+				//Serial1.println(engineSpeed*(1 + rollReg));
 			
-			//Left side of the aircraft
-			/*motor[LF].setSpeed(engineSpeed*(1 - rollReg));
-			motor[LB].setSpeed(engineSpeed*(1 - rollReg));
+				//Left side of the aircraft
+				/*motor[LF].setSpeed(engineSpeed*(1 - rollReg));
+				motor[LB].setSpeed(engineSpeed*(1 - rollReg));
 
-			//Right side of the aircraft
-			motor[RF].setSpeed(engineSpeed*(1 + rollReg));
-			motor[RB].setSpeed(engineSpeed*(1 + rollReg));*/
-			/* ====================================== */
+				//Right side of the aircraft
+				motor[RF].setSpeed(engineSpeed*(1 + rollReg));
+				motor[RB].setSpeed(engineSpeed*(1 + rollReg));*/
+				/* ====================================== */
+			}
 		}
 		
 		endTime = millis();
