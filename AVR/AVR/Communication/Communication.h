@@ -35,7 +35,14 @@ class Communication{
 		/*Send data of length len*/
 		static int send(const char *data, int len);
 		/*Send null terminated text string*/
-		static int send(const char *text);
+		static int print(const char *text);
+		static int print(float val);
+		static int print(int val);
+		
+		static int println(const char *text);
+		static int println(float val);
+		static int println(int val);
+		
 		static int getTimeouts();
 		static void resetTimeouts();
 };

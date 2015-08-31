@@ -37,8 +37,8 @@ void halt();
 
 */
 
-int main(void)
-{
+int main(void){
+	
 	//Used by the sensors
 	Motor motor[4];
 	CellVoltage battery[3];
@@ -56,7 +56,7 @@ int main(void)
 	Communication com;
 	int packetLength = 0;
 	char *packet = NULL;
-	
+	int cnt = 0;
 	//Used by boot and scheduler
 	bool bootStatus = TRUE;
 	unsigned long startTime, endTime;
@@ -66,6 +66,8 @@ int main(void)
 	init();
 	
 	//init serial communication and set receive deadline to 4ms.
+	//4 fits the current schedule, do not change unless the
+	//entire schedule is reworked.
 	com.init(4);
 	
 	// Join the I2C buss. The only implementation that supports all
@@ -75,28 +77,29 @@ int main(void)
 	Wire.begin();
 	delay(100);
 	
-	com.send("Boot Sequence Launched...");
+	com.println("Boot Sequence Launched...");
 	
 	/*==========Init Sensors ============*/
 	//init gyro and magnetic field sensors	
 	bootStatus = mpu.init();
+	mpu.setHardwareOffset(0.2198, 0.039, 0.005);
 	if(bootStatus)
-		com.send("MPU6050 connection [OK]");
+		com.println("MPU6050 connection [OK]");
 	else
-		com.send("MPU6050 connection [FAILED]");
+		com.println("MPU6050 connection [FAILED]");
 		
 	bootStatus = mpu.enableDMP();
 	if(bootStatus)
-		com.send("MPU6050 initialized [OK]");
+		com.println("MPU6050 initialized [OK]");
 	else
-		com.send("MPU6050 initialized [FAILED]");
+		com.println("MPU6050 initialized [FAILED]");
 	
 	//barometer and temperature
 	bootStatus = baro.init(MS561101BA_ADDR_CSB_LOW);
 	if(bootStatus)
-		com.send("MS561101BA initialized [OK]");
+		com.println("MS561101BA initialized [OK]");
 	else
-		com.send("MS561101BA initialized [FAILED]");
+		com.println("MS561101BA initialized [FAILED]");
 	//*==========Init Motors=============*/
 	
 	/*==========Init Engines ============*/
@@ -108,7 +111,7 @@ int main(void)
 	motor[RB].init(13);
 	//minimum wait time for arming
 	delay(8000);
-	Serial1.println("Engines armed [OK]");
+	com.println("Engines armed [OK]");
 	
 	/*==================================*/
 	
@@ -117,14 +120,14 @@ int main(void)
 	battery[CELL1].init(ADC0);
 	battery[CELL2].init(ADC1);
 	battery[CELL3].init(ADC2);
-	com.send("Battery initialized [OK]");
+	com.println("Battery initialized [OK]");
 	/*==================================*/
 	
 	// For safety reasons, turn off the engines until
 	// the connection to the rasp is established.
 	sensor.stop = true;
 
-	rollRegulator.init(1.f, 0.f, 0.f);
+	rollRegulator.init(0.01f, 0.f, 0.f);
 	
 	
 	// populate movavg_buff before starting loop
@@ -136,10 +139,10 @@ int main(void)
 	
 	// Boot status check, don't continue if something went wrong.
 	if(bootStatus)
-		com.send("Boot Sequence [OK]");
+		com.println("Boot Sequence [OK]");
 	else{
-		com.send("Boot Sequence [FAILED]");	
-		com.send("Halting...");
+		com.println("Boot Sequence [FAILED]");	
+		com.println("Halting...");
 		halt();
 	}		
 	
@@ -163,6 +166,16 @@ int main(void)
 		// Second minor cycle. The second minor cycle is responsible
 		// for the communication with the rasp and the regulators.
 		else if(scheuleCounter % 2 == 1){
+			/*
+			com.print("Yaw: ");
+			com.print(ypr[0]);
+			com.print("   ");
+			com.print("pitch: ");
+			com.print(ypr[1]);
+			com.print("   ");
+			com.print("roll: ");
+			com.println(ypr[2]);
+			*/
 			// check if there is any new data from the Rasp.
 			// The deadline is set to 4ms which means that there
 			// is room for less than 6ms further calculations
@@ -175,7 +188,7 @@ int main(void)
 			if(com.receive(packet, packetLength)){
 				if(!Protocol::decode(&sensor, packet, packetLength)){
 					memset(&sensor, 0x00, sizeof(sensordata));
-					com.send("Bad packet");
+					com.println("Bad packet");
 				}
 				else{
 					if(sensor.ps3.button[JS_BUTTON_START]){
@@ -188,12 +201,14 @@ int main(void)
 					}
 					
 					if(sensor.ps3.button[JS_BUTTON_TRIANGLE]){
-						rollRegulator.P += 0.1;
-						//com.send("Increasing P");
+						rollRegulator.P += 0.001;
+						com.print("P: ");
+						com.println(rollRegulator.P);
 					}
 					if(sensor.ps3.button[JS_BUTTON_CROSS]){
-						rollRegulator.P -= 0.1;
-						//com.send("Decreasing P");
+						rollRegulator.P -= 0.001;
+						com.print("P: ");
+						com.println(rollRegulator.P);
 					}
 					
 					if(sensor.ps3.button[JS_BUTTON_L1]){
@@ -224,10 +239,9 @@ int main(void)
 					
 					if(sensor.ps3.button[JS_BUTTON_DOWN])
 						engineSpeedRB += engineSpeedRB + calibrationDir >= 0 ? calibrationDir:0;
-					
-				}
+				}				
 			}
-			 
+			
 			// == 6 ms more to perform calculations ==
 			if(sensor.stop){	
 				motor[LF].setSpeed(0);
@@ -238,28 +252,26 @@ int main(void)
 			else{
 				/* =========== Roll regulator =========== */
 				float rollReg = rollRegulator.regulate(ypr[2], 0.0f);
-				
-				motor[LF].setSpeed(engineSpeed + engineSpeedLF);
-				motor[LB].setSpeed(engineSpeed + engineSpeedLB);
-				motor[RF].setSpeed(engineSpeed + engineSpeedRF);
-				motor[RB].setSpeed(engineSpeed + engineSpeedRB);
+				#define MAX_REGULATOR_SPEED 100
+				com.print("PID signal: ");
+				com.print(rollReg);
+				com.print("   LF: ");
+				com.print(engineSpeed + engineSpeedLF - rollReg*MAX_REGULATOR_SPEED);
+				com.print("    LB: ");
+				com.print(engineSpeed + engineSpeedLB - rollReg*MAX_REGULATOR_SPEED);
+				com.print("    RF: ");
+				com.print(engineSpeed + engineSpeedRF + rollReg*MAX_REGULATOR_SPEED);
+				com.print("    RB: ");
+				com.println(engineSpeed + engineSpeedRB + rollReg*MAX_REGULATOR_SPEED);
+				motor[LF].setSpeed(engineSpeed + engineSpeedLF + rollReg*MAX_REGULATOR_SPEED);
+				motor[LB].setSpeed(engineSpeed + engineSpeedLB + rollReg*MAX_REGULATOR_SPEED);
+				motor[RF].setSpeed(engineSpeed + engineSpeedRF - rollReg*MAX_REGULATOR_SPEED);
+				motor[RB].setSpeed(engineSpeed + engineSpeedRB - rollReg*MAX_REGULATOR_SPEED);
 				
 				/*Serial1.print(rollReg);
 				Serial1.print(" ");
 				Serial1.println(ypr[2]);
-				
-				
 				*/
-				//Serial1.print("Left motors: ");
-				//Serial1.println(engineSpeed*(1 + rollReg));
-			
-				//Left side of the aircraft
-				/*motor[LF].setSpeed(engineSpeed*(1 - rollReg));
-				motor[LB].setSpeed(engineSpeed*(1 - rollReg));
-
-				//Right side of the aircraft
-				motor[RF].setSpeed(engineSpeed*(1 + rollReg));
-				motor[RB].setSpeed(engineSpeed*(1 + rollReg));*/
 				/* ====================================== */
 			}
 		}
@@ -274,23 +286,9 @@ int main(void)
 			; // Do nothing
 		}
 		else 
-			com.send("Schedule overflow ");
+			com.println("Schedule overflow ");
 				
-		//Serial1.println(mpu.getAccelerationX());
-		//check if there is new sensordata to recieve from the sensor card
-		/*if (mpu.readYawPitchRoll(ypr, sensor.acc)) {
-			//update sensor struct
-			//Serial1.println("Data to REAd");
-			Serial1.print("Yaw ");
-			Serial1.print(ypr[0]);
-			Serial1.print(" Pitch ");
-			Serial1.print(ypr[1]);
-			Serial1.print(" Roll ");
-			Serial1.println(ypr[2]);
-			
-		}*/
-		
-		
+	
 		//temperature = baro.getTemperature(MS561101BA_OSR_4096);
 		//Serial1.print(temperature);
 		//Serial1.print(" degC pres: ");

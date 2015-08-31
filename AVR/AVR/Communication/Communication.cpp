@@ -45,8 +45,38 @@ int Communication::send(const char *data, int len){
 	return hdlc_TX(snd, data, len);
 }
 
-int Communication::send(const char *text){
+int Communication::print(const char *text){
 	return hdlc_TX(snd, text, strlen(text));
+}
+
+int Communication::println(const char *text){
+	hdlc_TX(snd, text, strlen(text));
+	return hdlc_TX(snd, "\n", 1);
+}
+
+int Communication::print(int val){
+	char buffer[20];
+	memset(buffer, 0x00, 20);
+	// unsafe, no boundary checks
+	itoa(val, buffer, 10);
+	return send(buffer, 10);
+}
+
+int Communication::print(float val){
+	char buffer[20];
+	memset(buffer, 0x00, 20);
+	dtostrf((double)val, 3, 4, buffer);
+	// unsafe, no boundary checks
+	return send(buffer, 10);
+}
+
+int Communication::println(int val){
+	print(val);
+	return print("\n");
+}
+int Communication::println(float val){
+	print(val);
+	return print("\n");
 }
 
 /* send callback used by the hdlc implementation returns 0 on success */

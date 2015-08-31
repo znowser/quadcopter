@@ -2,6 +2,11 @@
 //contains definitions, can only be included once!
 #include "MPU6050_6Axis_MotionApps20.h"
 
+// Converts degrees to radians.
+#define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
+// Converts radians to degrees.
+#define radiansToDegrees(angleRadians) (angleRadians * 180.0 / M_PI)
+
 volatile bool MPUAbstraction::mpuDataReady = FALSE;
 
 bool MPUAbstraction::init(){
@@ -78,8 +83,9 @@ bool MPUAbstraction::readYawPitchRoll(float ypr[3], int16_t acc[3]){
     
     //invert yaw and pitch to correspond to the real world
     //roll is right from beggining.
-    ypr[0] = -ypr[0];
-    ypr[1] = -ypr[1];  
+    ypr[0] = (-ypr[0] + offsetYaw) * 180 / M_PI;
+    ypr[1] = (-ypr[1] + offsetPitch) * 180 / M_PI;
+	ypr[2] = (ypr[2] + offsetRoll) * 180 / M_PI;
     return TRUE;
   }
   return FALSE;
@@ -88,4 +94,8 @@ bool MPUAbstraction::deviceStatus(){
   return devStatus != 0 ? FALSE:mpu.testConnection();
 }
 
-
+ void MPUAbstraction::setHardwareOffset(float yaw, float pitch, float roll){
+	 offsetYaw = yaw;
+	 offsetPitch = pitch;
+	 offsetRoll = roll;	 
+ }

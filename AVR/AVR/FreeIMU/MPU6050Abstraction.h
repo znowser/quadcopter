@@ -39,6 +39,8 @@ private:
   VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
   VectorFloat gravity;    // [x, y, z]            gravity vector
   
+  float offsetYaw, offsetPitch, offsetRoll;
+  
 public:
   bool init();
   bool enableDMP();
@@ -46,6 +48,7 @@ public:
   bool readYawPitchRoll(float ypr[3], int16_t acc[3]);
   static void MPUInt();
   bool deviceStatus();
+  void setHardwareOffset(float yaw, float pitch, float roll);
 };
 
 #endif
